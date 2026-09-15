@@ -17,7 +17,7 @@
 {#if data.isLogin}
 	{@render children?.()}
 {:else}
-	<AppShell>
+	<AppShell session={data.session}>
 		{@render children?.()}
 	</AppShell>
 {/if}

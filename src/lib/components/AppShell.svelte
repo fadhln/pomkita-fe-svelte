@@ -3,11 +3,11 @@
 	import Sidebar from './Sidebar.svelte';
 	import Topbar from './Topbar.svelte';
 
-	let { children }: { children?: Snippet } = $props();
+	let { children, session }: { children?: Snippet; session?: { roles?: string[] | null } | null } = $props();
 </script>
 
 <div class="shell">
-	<Sidebar />
+	<Sidebar {session} />
 	<div class="main-area">
 		<Topbar />
 		<main class="content">{@render children?.()}</main>

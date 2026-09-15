@@ -1,5 +1,7 @@
 <script lang="ts">
 	type NavigationItem = { label: string; href: string; disabled?: boolean };
+	let { session }: { session?: { roles?: string[] | null } | null } = $props();
+	let canManageMasterData = $derived((session?.roles ?? []).some((role) => ['owner', 'superadmin'].includes(role.toLowerCase())));
 
 	const navigation: NavigationItem[] = [
 		{ label: 'Beranda', href: '/' },
@@ -30,6 +32,10 @@
 					</a>
 				</li>
 			{/each}
+			{#if canManageMasterData}
+				<li><a href="/organisasi">Organisasi</a></li>
+				<li><a href="/stasiun">Stasiun</a></li>
+			{/if}
 		</ul>
 	</nav>
 

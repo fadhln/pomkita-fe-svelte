@@ -28,6 +28,12 @@ export const draftFixture = {
 	station_id: shiftFixture.station_id, draft_id: shiftDetailFixture.draft_id, shift_id: shiftFixture.shift_id,
 	status: 'editing', revision: shiftDetailFixture.revision, readings: [], sales: [], losses: []
 } as const;
+export const organizationFixture = {
+	id: sessionFixture.org_id, name: 'Organisasi PomKita', legal_name: 'PT PomKita Operasional', address: 'Jakarta', contact_email: 'admin@pomkita.id', timezone: 'Asia/Jakarta', enabled: true
+};
+export const stationFixture = {
+	id: sessionFixture.station_ids[0], name: 'Stasiun Utama', code: 'UTM', address: 'Jakarta', timezone: 'Asia/Jakarta', enabled: true
+};
 
 const submitRequests = new Map<string, string>();
 export function resetShiftFixtures() { submitRequests.clear(); }
@@ -49,6 +55,16 @@ export const handlers: RequestHandler[] = [
 	http.delete(`${apiUrl}/logout`, () => new HttpResponse(null, { status: 204 })),
 	http.get(`${apiUrl}/session`, () => HttpResponse.json(sessionFixture, { status: 200 })),
 	http.get(`${apiUrl}/account`, () => HttpResponse.json(accountFixture, { status: 200 })),
+	http.get(`${apiUrl}/organizations`, () => HttpResponse.json([organizationFixture], { status: 200 })),
+	http.get(`${apiUrl}/organizations/${organizationFixture.id}`, () => HttpResponse.json(organizationFixture, { status: 200 })),
+	http.post(`${apiUrl}/organizations`, async ({ request }) => HttpResponse.json({ ...organizationFixture, ...(await request.json() as Record<string, unknown>), id: 'org-created' }, { status: 201 })),
+	http.patch(`${apiUrl}/organizations/${organizationFixture.id}`, async ({ request }) => HttpResponse.json({ ...organizationFixture, ...(await request.json() as Record<string, unknown>) }, { status: 200 })),
+	http.post(`${apiUrl}/organizations/${organizationFixture.id}/disable`, () => new HttpResponse(null, { status: 204 })),
+	http.get(`${apiUrl}/stations`, () => HttpResponse.json([stationFixture], { status: 200 })),
+	http.get(`${apiUrl}/stations/${stationFixture.id}`, () => HttpResponse.json(stationFixture, { status: 200 })),
+	http.post(`${apiUrl}/stations`, async ({ request }) => HttpResponse.json({ ...stationFixture, ...(await request.json() as Record<string, unknown>), id: 'station-created' }, { status: 201 })),
+	http.patch(`${apiUrl}/stations/${stationFixture.id}`, async ({ request }) => HttpResponse.json({ ...stationFixture, ...(await request.json() as Record<string, unknown>) }, { status: 200 })),
+	http.post(`${apiUrl}/stations/${stationFixture.id}/disable`, () => new HttpResponse(null, { status: 204 })),
 	http.patch(`${apiUrl}/account`, async ({ request }) => {
 		const input = await request.json() as { display_name: string; username: string };
 		accountFixture.display_name = input.display_name;
