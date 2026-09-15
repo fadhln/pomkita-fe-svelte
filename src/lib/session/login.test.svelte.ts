@@ -32,7 +32,7 @@ describe('Masuk', () => {
 	it('shows the invalid-credential error', async () => {
 		server.use(
 			http.post(`${apiUrl}/login`, () =>
-				HttpResponse.json({ code: 'invalid_credentials', message: 'Invalid credentials' }, { status: 401 })
+				HttpResponse.json({ type: 'https://example.com/problems/invalid-credentials', title: 'Unauthorized', status: 401, detail: 'Email atau kata sandi salah.' }, { status: 401 })
 			)
 		);
 		render(LoginPage);

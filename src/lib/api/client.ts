@@ -1,9 +1,11 @@
+export type ProblemError = { location?: string; message?: string; value?: unknown };
+export type ProblemDetails = { type?: string; title?: string; status?: number; detail?: string; errors?: ProblemError[] | null; instance?: string };
 export type ApiErrorBody = {
 	code: string;
 	message: string;
+	problem: ProblemDetails;
 	request_id?: string;
 	field_errors?: Record<string, string>;
-	conflict_period?: string;
 };
 
 export class ApiError extends Error {
@@ -22,7 +24,7 @@ export class ApiError extends Error {
 
 export type SessionExpiredHandler = (error: ApiError) => void;
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
 let sessionExpiredHandler: SessionExpiredHandler | undefined;
 
 export function setSessionExpiredHandler(handler: SessionExpiredHandler | undefined) {
@@ -44,26 +46,42 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function decodeErrorBody(value: unknown, status: number): ApiErrorBody {
-	const fallback: ApiErrorBody = {
-		code: status === 401 ? 'invalid_session' : status >= 500 ? 'unexpected' : `HTTP_${status}`,
-		message: 'Permintaan tidak dapat diproses.'
-	};
-	if (!isRecord(value)) return fallback;
-
-	const body: ApiErrorBody = {
-		code: typeof value.code === 'string' ? value.code : fallback.code,
-		message: typeof value.message === 'string' ? value.message : fallback.message
-	};
-	if (typeof value.request_id === 'string') body.request_id = value.request_id;
-	if (isRecord(value.field_errors)) {
-		const fieldErrors = Object.entries(value.field_errors).filter(
-			([, message]) => typeof message === 'string'
-		);
-		body.field_errors = Object.fromEntries(fieldErrors) as Record<string, string>;
+function problemDetails(value: unknown): ProblemDetails {
+	if (!isRecord(value)) return {};
+	const problem: ProblemDetails = {};
+	if (typeof value.type === 'string') problem.type = value.type; if (typeof value.title === 'string') problem.title = value.title;
+	if (typeof value.status === 'number') problem.status = value.status; if (typeof value.detail === 'string') problem.detail = value.detail;
+	if (typeof value.instance === 'string') problem.instance = value.instance;
+	if (Array.isArray(value.errors)) {
+		problem.errors = value.errors.filter(isRecord).map((error) => ({ location: typeof error.location === 'string' ? error.location : undefined, message: typeof error.message === 'string' ? error.message : undefined, value: error.value }));
 	}
-	if (typeof value.conflict_period === 'string') body.conflict_period = value.conflict_period;
-	return body;
+	return problem;
+}
+
+function problemCode(problem: ProblemDetails, status: number) {
+	const text = `${problem.type ?? ''} ${problem.title ?? ''} ${problem.detail ?? ''}`.toLowerCase();
+	if (text.includes('credential')) return 'invalid_credentials';
+	if (text.includes('session') && (text.includes('idle') || text.includes('expired'))) return 'session_idle';
+	if (status === 401 || text.includes('unauthorized') || text.includes('authentication')) return 'invalid_session';
+	if (status === 403 || text.includes('forbidden')) return 'forbidden';
+	if (status === 404 || text.includes('not found')) return 'not_found';
+	if (status === 409 || text.includes('conflict')) return 'conflict';
+	if (status === 422 || text.includes('validation') || text.includes('unprocessable')) return 'validation';
+	return status >= 500 ? 'unexpected' : `HTTP_${status}`;
+}
+
+function decodeErrorBody(value: unknown, status: number): ApiErrorBody {
+	const problem = problemDetails(value);
+	const fallback: ApiErrorBody = {
+		code: problemCode(problem, status),
+		message: problem.detail ?? problem.title ?? 'Permintaan tidak dapat diproses.',
+		problem
+	};
+	if (problem.errors?.length) {
+		const fieldErrors = problem.errors.filter((error) => error.location && error.message).map((error) => [error.location!, error.message!]);
+		if (fieldErrors.length) fallback.field_errors = Object.fromEntries(fieldErrors);
+	}
+	return fallback;
 }
 
 function parseJson(value: string): unknown {
@@ -76,7 +94,7 @@ function parseJson(value: string): unknown {
 }
 
 function notifySessionExpiry(error: ApiError) {
-	if (error.status === 401 && ['invalid_session', 'session_idle'].includes(error.body.code)) {
+	if (error.status === 401 && ['invalid_credentials', 'invalid_session', 'session_idle'].includes(error.body.code)) {
 		sessionExpiredHandler?.(error);
 	}
 }

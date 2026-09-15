@@ -16,11 +16,11 @@ describe('session expiry redirect', () => {
 		const cleanup = installSessionExpiryRedirect();
 		server.use(
 			http.get(`${apiUrl}/session`, () =>
-				HttpResponse.json({ code: 'session_idle', message: 'Sesi tidak aktif.' }, { status: 401 })
+				HttpResponse.json({ type: 'https://example.com/problems/session-idle', title: 'Unauthorized', status: 401, detail: 'Sesi tidak aktif.' }, { status: 401 })
 			)
 		);
 
-		await expect(apiFetch('/session')).rejects.toMatchObject({ body: { code: 'session_idle' } });
+		await expect(apiFetch('/session')).rejects.toMatchObject({ body: { code: 'session_idle', problem: { type: 'https://example.com/problems/session-idle' } } });
 		expect(navigation.goto).toHaveBeenCalledWith('/masuk');
 		cleanup();
 	});

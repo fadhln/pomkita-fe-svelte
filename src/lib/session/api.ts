@@ -3,9 +3,9 @@ import { apiFetch } from '$lib/api/client';
 export type Session = {
 	user_id: string;
 	display_name: string;
-	roles: string[];
+	roles: string[] | null;
 	org_id: string;
-	station_id?: string;
+	station_ids: string[] | null;
 };
 
 export type LoginInput = {

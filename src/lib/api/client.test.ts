@@ -8,27 +8,27 @@ describe('apiFetch', () => {
 	});
 
 	it.each([
-		[401, 'invalid_credentials'],
-		[401, 'invalid_session'],
-		[401, 'session_idle'],
-		[403, 'forbidden'],
-		[404, 'not_found'],
-		[409, 'conflict'],
-		[422, 'validation']
-	] as const)('maps %s errors with their stable code', async (status, code) => {
+		[401, 'invalid_credentials', 'https://example.com/problems/invalid-credentials'],
+		[401, 'invalid_session', 'https://example.com/problems/unauthorized'],
+		[401, 'session_idle', 'https://example.com/problems/session-idle'],
+		[403, 'forbidden', 'https://example.com/problems/forbidden'],
+		[404, 'not_found', 'https://example.com/problems/not-found'],
+		[409, 'conflict', 'https://example.com/problems/conflict'],
+		[422, 'validation', 'https://example.com/problems/validation']
+	] as const)('maps problem details to stable code %s', async (status, code, type) => {
 		vi.stubGlobal(
 			'fetch',
 			vi.fn().mockResolvedValue(
-				new Response(JSON.stringify({ code, message: 'Permintaan gagal.', field_errors: { email: 'Tidak valid.' } }), {
+				new Response(JSON.stringify({ type, title: 'Permintaan gagal.', status, detail: 'Detail masalah.', errors: [{ location: 'body.email', message: 'Tidak valid.' }] }), {
 					status,
-					headers: { 'Content-Type': 'application/json' }
+					headers: { 'Content-Type': 'application/problem+json' }
 				})
 			)
 		);
 
 		await expect(apiFetch('/session')).rejects.toMatchObject({
 			status,
-			body: { code, field_errors: { email: 'Tidak valid.' } }
+			body: { code, message: 'Detail masalah.', problem: { type, title: 'Permintaan gagal.', errors: [{ location: 'body.email', message: 'Tidak valid.' }] }, field_errors: { 'body.email': 'Tidak valid.' } }
 		});
 	});
 
@@ -52,7 +52,7 @@ describe('apiFetch', () => {
 		vi.stubGlobal(
 			'fetch',
 			vi.fn().mockResolvedValue(
-				new Response(JSON.stringify({ code: 'unexpected', message: 'Gagal.' }), {
+				new Response(JSON.stringify({ type: 'https://example.com/problems/internal', title: 'Internal Server Error', detail: 'Gagal.' }), {
 					status: 500,
 					headers: { 'X-Request-ID': 'response-request-2' }
 				})
@@ -60,7 +60,7 @@ describe('apiFetch', () => {
 		);
 
 		await expect(apiFetch('/session')).rejects.toMatchObject({
-			body: { code: 'unexpected', request_id: 'response-request-2' },
+			body: { code: 'unexpected', message: 'Gagal.', request_id: 'response-request-2' },
 			requestId: 'response-request-2'
 		});
 	});
@@ -96,13 +96,13 @@ describe('apiFetch', () => {
 		vi.stubGlobal(
 			'fetch',
 			vi.fn().mockResolvedValue(
-				new Response(JSON.stringify({ code: 'session_idle', message: 'Sesi tidak aktif.' }), { status: 401 })
+				new Response(JSON.stringify({ type: 'https://example.com/problems/session-idle', title: 'Unauthorized', detail: 'Sesi tidak aktif.' }), { status: 401 })
 			)
 		);
 
 		await expect(apiFetch('/session')).rejects.toBeInstanceOf(ApiError);
 		expect(expired).toHaveBeenCalledWith(
-			expect.objectContaining({ body: expect.objectContaining({ code: 'session_idle' }) })
+			expect.objectContaining({ body: expect.objectContaining({ code: 'session_idle', problem: expect.objectContaining({ type: 'https://example.com/problems/session-idle' }) }) })
 		);
 	});
 });

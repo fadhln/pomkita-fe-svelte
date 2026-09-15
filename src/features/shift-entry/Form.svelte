@@ -29,8 +29,9 @@
 
 	function id() { return globalThis.crypto?.randomUUID?.() ?? `shift-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
 	async function claim() {
+		if (!draft.draft_id) { error = 'Draft shift belum tersedia.'; return; }
 		claimPending = true;
-		try { const result = await claimDraft(shiftId); claimToken = result.claim_token; revision = result.revision; }
+		try { const result = await claimDraft({ station_id: draft.station_id, shift_id: shiftId, draft_id: draft.draft_id }); claimToken = result.claim_token; revision = result.revision; }
 		catch { error = 'Klaim draft tidak dapat dilakukan.'; }
 		finally { claimPending = false; }
 	}
@@ -38,35 +39,35 @@
 
 	async function saveReading(nozzleId: string, value: { meter_start: string; meter_end: string }) {
 		if (!claimToken) return;
-		try { const result = await writeDraftReading({ draft_id: draft.draft_id, claim_token: claimToken, revision, nozzle_id: nozzleId, ...value }); revision = result.revision; draft.readings = draft.readings.map((row) => row.nozzle_id === nozzleId ? { ...row, ...value } : row); await invalidateAll(); }
+		try { const result = await writeDraftReading({ station_id: draft.station_id, draft_id: draft.draft_id, claim_token: claimToken, revision, nozzle_id: nozzleId, ...value }); revision = result.revision; draft.readings = draft.readings.map((row) => row.nozzle_id === nozzleId ? { ...row, ...value } : row); await invalidateAll(); }
 		catch (cause) { conflict = isDraftConflict(cause); error = cause instanceof ApiError && cause.status === 422 ? 'Periksa pembacaan meter.' : ''; }
 	}
 	async function saveSale(dispenserId: string, value: { cash_amount: string; cashless_amount: string }) {
 		if (!claimToken) return;
-		try { const result = await writeDraftSales({ draft_id: draft.draft_id, claim_token: claimToken, revision, dispenser_id: dispenserId, ...value }); revision = result.revision; draft.sales = draft.sales.map((row) => row.dispenser_id === dispenserId ? { ...row, ...value } : row); await invalidateAll(); }
+		try { const result = await writeDraftSales({ station_id: draft.station_id, draft_id: draft.draft_id, claim_token: claimToken, revision, dispenser_id: dispenserId, ...value }); revision = result.revision; draft.sales = draft.sales.map((row) => row.dispenser_id === dispenserId ? { ...row, ...value } : row); await invalidateAll(); }
 		catch (cause) { conflict = isDraftConflict(cause); }
 	}
 	async function saveLoss(loss: DraftLoss, value: { direction: 'loss' | 'gain'; reason_code: string; liters: string; cash_amount: string; note: string }) {
 		if (Object.keys(validateLossRow(value)).length) { error = 'Periksa data loss dan gain.'; return; }
 		if (!claimToken) return;
-		try { const result = await writeDraftLoss({ draft_id: draft.draft_id, claim_token: claimToken, revision, loss_id: loss.loss_id, ...value }); revision = result.revision; draft.losses = draft.losses.map((row) => row.loss_id === loss.loss_id ? { ...row, ...value } : row); await invalidateAll(); }
+		try { const result = await writeDraftLoss({ station_id: draft.station_id, draft_id: draft.draft_id, claim_token: claimToken, revision, loss_id: loss.loss_id, ...value }); revision = result.revision; draft.losses = draft.losses.map((row) => row.loss_id === loss.loss_id ? { ...row, ...value } : row); await invalidateAll(); }
 		catch (cause) { conflict = isDraftConflict(cause); }
 	}
 	async function upload(lossRowId: string, file: File) {
 		if (!claimToken) return;
 		const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
 		const content_hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
-		try { const result = await uploadDraftEvidence({ draft_id: draft.draft_id, claim_token: claimToken, revision, loss_row_id: lossRowId, evidence_type: 'loss', object_key: `${id()}/${file.name}`, content_hash, size_bytes: file.size, mime: file.type }); revision = result.revision; draft.evidence = [...(draft.evidence ?? []), { loss_row_id: lossRowId, evidence_type: 'loss', object_key: file.name, content_hash, size_bytes: file.size, mime: file.type }]; await invalidateAll(); }
+		try { const result = await uploadDraftEvidence({ station_id: draft.station_id, draft_id: draft.draft_id, claim_token: claimToken, revision, loss_row_id: lossRowId, evidence_type: 'loss', object_key: `${id()}/${file.name}`, content_hash, size_bytes: file.size, mime: file.type }); revision = result.revision; draft.evidence = [...(draft.evidence ?? []), { loss_row_id: lossRowId, evidence_type: 'loss', object_key: file.name, content_hash, size_bytes: file.size, mime: file.type }]; await invalidateAll(); }
 		catch (cause) { conflict = isDraftConflict(cause); error = 'Bukti tidak dapat diunggah.'; }
 	}
 	async function heartbeat() {
 		if (!claimToken) return;
 		heartbeatPending = true;
-		try { await heartbeatDraft(draft.draft_id, claimToken); await invalidateAll(); }
+		try { await heartbeatDraft({ station_id: draft.station_id, draft_id: draft.draft_id, claim_token: claimToken }); await invalidateAll(); }
 		finally { heartbeatPending = false; }
 	}
 	function addLoss() { draft.losses = [...draft.losses, { row_id: id(), loss_id: id(), direction: 'loss', reason_code: '', liters: '', cash_amount: null, note: null }]; }
-	function submitInput() { return { shift_id: draft.shift_id, draft_id: draft.draft_id, claim_token: claimToken ?? '', revision, hash_version: 1, readings: draft.readings.map(({ nozzle_id, meter_start, meter_end }) => ({ nozzle_id, meter_start, meter_end })), sales: draft.sales.map(({ dispenser_id, cash_amount, cashless_amount }) => ({ dispenser_id, cash_amount, cashless_amount })), losses: draft.losses.map(({ loss_id, direction, reason_code, liters, cash_amount, note }) => ({ loss_id, direction, reason_code, liters, cash_amount: cash_amount ?? '', note: note ?? '' })) }; }
+	function submitInput() { return { station_id: draft.station_id, shift_id: draft.shift_id, draft_id: draft.draft_id, claim_token: claimToken ?? '', revision, payload: { hash_version: 1, readings: draft.readings.map(({ nozzle_id, meter_start, meter_end }) => ({ nozzle_id, meter_start, meter_end })), sales: draft.sales.map(({ dispenser_id, cash_amount, cashless_amount }) => ({ dispenser_id, cash_amount, cashless_amount })), losses: draft.losses.map(({ loss_id, direction, reason_code, liters, cash_amount, note }) => ({ loss_id, direction, reason_code, liters, cash_amount: cash_amount ?? '', note: note ?? '' })) } }; }
 	async function submit() {
 		submitFailed = false;
 		try { await submitShift(submitInput(), id()); submitOpen = false; awaitingConfirmation = true; await invalidateAll(); }

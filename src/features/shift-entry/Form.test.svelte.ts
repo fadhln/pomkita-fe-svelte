@@ -11,9 +11,9 @@ vi.mock('$app/navigation', () => navigation);
 describe('Form', () => {
 	it('claims the draft, confirms, and submits the wire payload', async () => {
 		const requests: Request[] = [];
-		server.use(http.post(`${apiUrl}/shift/submit`, async ({ request }) => {
+		server.use(http.post(`${apiUrl}/submissions`, async ({ request }) => {
 			requests.push(request);
-			return HttpResponse.json({ report_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', replay: false });
+			return HttpResponse.json({ report_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', replay: false, request_hash: 'cmVxdWVzdA' });
 		}));
 		render(Form, {
 			shiftId: draftFixture.shift_id,
@@ -31,9 +31,10 @@ describe('Form', () => {
 		await waitFor(() => expect(screen.getByText('Menunggu konfirmasi')).toBeInTheDocument());
 		expect(requests).toHaveLength(1);
 		expect(await requests[0].clone().json()).toMatchObject({
+			station_id: draftFixture.station_id,
 			shift_id: draftFixture.shift_id,
 			draft_id: draftFixture.draft_id,
-			readings: [{ nozzle_id: 'nozzle-1', meter_start: '100.0', meter_end: '125.0' }]
+			payload: { readings: [{ nozzle_id: 'nozzle-1', meter_start: '100.0', meter_end: '125.0' }] }
 		});
 		expect(requests[0].headers.get('Idempotency-Key')).toBeTruthy();
 	});

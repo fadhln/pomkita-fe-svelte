@@ -3,5 +3,6 @@ import { getShifts } from '../../features/shift-entry/api';
 
 export const load: PageLoad = async ({ parent }) => {
 	const parentData = await parent();
-	return { shifts: await getShifts(), stationId: parentData.session?.station_id ?? '' };
+	const stationId = parentData.session?.station_ids?.[0] ?? '';
+	return { shifts: (await getShifts(stationId)) ?? [], stationId };
 };
