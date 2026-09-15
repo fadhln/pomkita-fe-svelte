@@ -1,0 +1,28 @@
+import { describe, expect, it } from 'vitest';
+import { getSession, login, logout } from './api';
+
+describe('session API', () => {
+	it('reads the pinned session response', async () => {
+		await expect(getSession()).resolves.toEqual({
+			user_id: '11111111-1111-4111-8111-111111111111',
+			display_name: 'Test User',
+			roles: ['Supervisor'],
+			org_id: '22222222-2222-4222-8222-222222222222',
+			station_id: '33333333-3333-4333-8333-333333333333'
+		});
+	});
+
+	it('accepts the pinned credentials and logs out with a 204', async () => {
+		await expect(login({ email: 'user@example.com', password: 'correct-password' })).resolves.toBeUndefined();
+		await expect(logout()).resolves.toBeUndefined();
+	});
+
+	it('rejects an unknown email with invalid_credentials', async () => {
+		const request = login({ email: 'unknown@example.com', password: 'correct-password' });
+
+		await expect(request).rejects.toMatchObject({
+			status: 401,
+			body: { code: 'invalid_credentials' }
+		});
+	});
+});

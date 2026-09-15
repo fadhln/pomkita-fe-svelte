@@ -1,9 +1,30 @@
+<script lang="ts">
+	import { goto, invalidateAll } from '$app/navigation';
+	import { logout } from '$lib/session/api';
+
+	let pending = $state(false);
+
+	async function handleLogout() {
+		pending = true;
+		try {
+			await logout();
+			await invalidateAll();
+			await goto('/masuk');
+		} finally {
+			pending = false;
+		}
+	}
+</script>
+
 <header class="topbar">
 	<div>
 		<p class="topbar-label">Ruang kerja</p>
 		<p class="topbar-title">Operasional harian</p>
 	</div>
-	<p class="connection-status"><span class="status-dot" aria-hidden="true"></span>Terhubung</p>
+	<div class="topbar-actions">
+		<p class="connection-status"><span class="status-dot" aria-hidden="true"></span>Terhubung</p>
+		<button type="button" disabled={pending} onclick={handleLogout}>Keluar</button>
+	</div>
 </header>
 
 <style>
@@ -18,6 +39,12 @@
 		padding: 0 var(--space-8);
 		background: var(--color-surface);
 		border-bottom: 1px solid var(--color-border);
+	}
+
+	.topbar-actions {
+		display: flex;
+		align-items: center;
+		gap: var(--space-4);
 	}
 
 	.topbar-label {
@@ -50,6 +77,21 @@
 		height: 0.5rem;
 		border-radius: 50%;
 		background: var(--color-success);
+	}
+
+	button {
+		padding: var(--space-2) var(--space-3);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		background: var(--color-surface);
+		color: var(--color-primary);
+		font-weight: 700;
+		cursor: pointer;
+	}
+
+	button:disabled {
+		cursor: wait;
+		opacity: 0.65;
 	}
 
 	@media (max-width: 48rem) {
