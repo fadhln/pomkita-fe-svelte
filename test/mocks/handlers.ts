@@ -10,6 +10,7 @@ export const shiftFixture = {
 	supervisor_id: sessionFixture.user_id, opened_at: '2026-09-13T08:00:00Z', business_date: '2026-09-13', status: 'open'
 } as const;
 export const shiftDetailFixture = { ...shiftFixture, draft_id: '55555555-5555-4555-8555-555555555555', revision: 2 } as const;
+export const reportFixture = { report_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', station_id: shiftFixture.station_id, shift_id: shiftFixture.shift_id, version_no: 1, status: 'submitted', submitted_at: '2026-09-13T09:00:00Z', readings: [], sales: [], losses: [] } as const;
 export const openedShiftFixture = {
 	...shiftFixture, org_id: sessionFixture.org_id, timezone_snapshot: 'Asia/Jakarta'
 } as const;
@@ -36,6 +37,9 @@ export const handlers: RequestHandler[] = [
 	http.get(`${apiUrl}/shifts`, () => HttpResponse.json([shiftFixture], { status: 200 })),
 	http.post(`${apiUrl}/shifts`, () => HttpResponse.json(openedShiftFixture, { status: 200 })),
 	http.get(`${apiUrl}/shifts/${shiftFixture.shift_id}`, () => HttpResponse.json(shiftDetailFixture, { status: 200 })),
+	http.get(`${apiUrl}/reports/${reportFixture.report_id}`, () => HttpResponse.json(reportFixture, { status: 200 })),
+	http.get(`${apiUrl}/reports/${reportFixture.report_id}/printout`, () => HttpResponse.json(reportFixture, { status: 200 })),
+	http.get(`${apiUrl}/policies/history`, () => HttpResponse.json([], { status: 200 })),
 	http.post(`${apiUrl}/drafts/claim`, () => HttpResponse.json({ draft_id: shiftDetailFixture.draft_id, claim_token: '66666666-6666-4666-8666-666666666666', claim_expires_at: '2026-09-13T09:00:00Z', revision: shiftDetailFixture.revision })),
 	http.post(`${apiUrl}/drafts/heartbeat`, () => new HttpResponse(null, { status: 204 })),
 	http.post(`${apiUrl}/drafts/readings`, () => HttpResponse.json({ revision: 3 })),

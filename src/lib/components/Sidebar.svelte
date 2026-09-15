@@ -1,18 +1,16 @@
 <script lang="ts">
-	type NavigationItem = {
-		label: string;
-		href: string;
-	};
+	type NavigationItem = { label: string; href: string; disabled?: boolean };
 
 	const navigation: NavigationItem[] = [
 		{ label: 'Beranda', href: '/' },
 		{ label: 'Shift', href: '/shift' },
 		{ label: 'Laporan', href: '/laporan' },
-		{ label: 'Kepatuhan', href: '/kepatuhan' },
+		{ label: 'Tata kelola', href: '/governance' },
 		{ label: 'Kebijakan', href: '/kebijakan' },
 		{ label: 'Audit', href: '/audit' },
 		{ label: 'Anomali', href: '/anomali' },
-		{ label: 'Pengaturan', href: '/pengaturan' }
+		{ label: 'Backfill', href: '/backfill' },
+		{ label: 'Pengaturan', href: '/pengaturan', disabled: true }
 	];
 </script>
 
@@ -27,7 +25,7 @@
 		<ul>
 			{#each navigation as item}
 				<li>
-					<a class:active={item.href === '/'} href={item.href} aria-current={item.href === '/' ? 'page' : undefined}>
+					<a class:active={item.href === '/'} class:disabled={item.disabled} href={item.href} aria-disabled={item.disabled || undefined} onclick={(event) => item.disabled && event.preventDefault()} aria-current={item.href === '/' ? 'page' : undefined}>
 						{item.label}
 					</a>
 				</li>
@@ -106,6 +104,8 @@
 		background: var(--color-primary-soft);
 		color: var(--color-primary);
 	}
+
+	nav a.disabled { opacity: .5; pointer-events: none; }
 
 	.sidebar-footer {
 		display: flex;

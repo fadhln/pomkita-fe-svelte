@@ -1,0 +1,15 @@
+<script lang="ts">
+	import { auditIdentity, exportAudit, downloadAuditCsv, type AuditRow } from '../../features/audit/api';
+	import AuditTable from '../../features/audit/AuditTable.svelte';
+	let { data }: { data: { rows: AuditRow[]; verification: { verified: boolean } | null } } = $props();
+	let type = $state(''); let station = $state(''); let date = $state(''); let exportError = $state(''); let exporting = $state(false);
+	const rows = $derived(data.rows.filter((row) => (!type || row.event_type === type) && (!station || auditIdentity(row).station_id.toLowerCase().includes(station.toLowerCase())) && (!date || row.created_at.startsWith(date))));
+	async function download() { exporting = true; exportError = ''; try { downloadAuditCsv(await exportAudit()); } catch { exportError = 'Ekspor audit tidak dapat dilakukan.'; } finally { exporting = false; } }
+</script>
+
+<svelte:head><title>Audit | PomKita</title></svelte:head>
+<section class="page" aria-labelledby="audit-title"><header><p class="overline">Jejak perubahan</p><h1 id="audit-title">Audit</h1><p>Periksa rantai audit dan identitas di dalam payload peristiwa.</p></header>{#if data.verification}<div class:bad={!data.verification.verified} class="status">{data.verification.verified ? 'Rantai audit terverifikasi' : 'Rantai audit tidak terverifikasi'}</div>{/if}<section class="panel"><div class="toolbar"><h2>Jejak audit</h2><button type="button" disabled={exporting} onclick={() => void download()}>{exporting ? 'Mengekspor…' : 'Ekspor CSV'}</button></div><div class="filters"><label>Jenis peristiwa<input bind:value={type} /></label><label>Stasiun<input bind:value={station} /></label><label>Tanggal<input type="date" bind:value={date} /></label></div>{#if exportError}<p class="error" role="alert">{exportError}</p>{/if}<AuditTable {rows} /></section></section>
+
+<style>
+	.page { display: grid; gap: var(--space-6); } header { display: grid; gap: var(--space-2); } h1, header p { margin: 0; } h1 { font-size: 2rem; } .overline { color: var(--color-primary); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; } header p:last-child { color: var(--color-text-muted); } .status { width: fit-content; padding: .4rem .7rem; border-radius: 99rem; background: #eaf7ef; color: var(--color-success); font-weight: 700; } .status.bad { background: #fff0f0; color: var(--color-danger); } .panel { display: grid; gap: var(--space-4); padding: var(--space-5); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); } .toolbar, .filters { display: flex; align-items: end; gap: var(--space-3); flex-wrap: wrap; } .toolbar { justify-content: space-between; } h2 { margin: 0; font-size: 1.05rem; } label { display: grid; gap: .35rem; min-width: 12rem; font-size: .8rem; font-weight: 700; } input { min-height: 2.5rem; padding: .45rem .65rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); } .error { color: var(--color-danger); }
+</style>
