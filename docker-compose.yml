@@ -28,6 +28,13 @@ services:
       JWT_AUDIENCE: spbu-recon
       JWT_SECRET_KEY_1: pomkita-demo-only-secret
       CORS_ALLOWED_ORIGINS: http://localhost:${S5_FE_PORT:-3100}
+      POMKITA_MAILER: spool
+      POMKITA_MAIL_FROM: noreply@demo.pomkita.test
+      POMKITA_PUBLIC_BASE_URL: http://localhost:${S5_FE_PORT:-3100}
+      POMKITA_MAIL_SPOOL_DIR: /var/spool/pomkita
+    user: "0:0"
+    volumes:
+      - ./test/e2e-integration/mail-spool:/var/spool/pomkita
     ports:
       - "${S5_BE_PORT:-8180}:8080"
     healthcheck:

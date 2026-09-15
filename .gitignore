@@ -24,3 +24,4 @@ vite.config.ts.timestamp-*
 screenshots/
 playwright-report/
 test-results/
+test/e2e-integration/mail-spool/

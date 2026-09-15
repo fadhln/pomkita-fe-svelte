@@ -2,12 +2,35 @@
 -- The password is demo-password.
 begin;
 
-insert into public.organizations (org_id, name)
-values ('11111111-1111-4111-8111-111111111111', 'PomKita Demo')
+insert into public.organizations (org_id, name, legal_name, address, contact_email, timezone)
+values (
+  '11111111-1111-4111-8111-111111111111',
+  'PomKita Demo',
+  'PT PomKita Demo',
+  'Jalan Integrasi 1, Jakarta',
+  'kontak@demo.pomkita.test',
+  'Asia/Jakarta'
+)
 on conflict (org_id) do nothing;
 
-insert into public.stations (org_id, station_id, timezone)
-values ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', 'Asia/Jakarta')
+insert into public.stations (org_id, station_id, name, code, address, timezone)
+values
+  (
+    '11111111-1111-4111-8111-111111111111',
+    '22222222-2222-4222-8222-222222222222',
+    'Stasiun Demo Utama',
+    'DUT',
+    'Jalan Integrasi 1, Jakarta',
+    'Asia/Jakarta'
+  ),
+  (
+    '11111111-1111-4111-8111-111111111111',
+    '23232323-2323-4232-8232-232323232323',
+    'Stasiun Demo Timur',
+    'DTT',
+    'Jalan Integrasi 2, Jakarta',
+    'Asia/Jakarta'
+  )
 on conflict (org_id, station_id) do nothing;
 
 insert into public.users (user_id, org_id, email, username, display_name, password_hash)
@@ -21,7 +44,8 @@ insert into public.user_station_roles (org_id, station_id, user_id, role)
 values
   ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', '66666666-6666-4666-8666-666666666666', 'Supervisor'),
   ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', '77777777-7777-4777-8777-777777777777', 'Station Admin'),
-  ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', '88888888-8888-4888-8888-888888888888', 'Owner')
+  ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', '88888888-8888-4888-8888-888888888888', 'Owner'),
+  ('11111111-1111-4111-8111-111111111111', '23232323-2323-4232-8232-232323232323', '88888888-8888-4888-8888-888888888888', 'Owner')
 on conflict (org_id, station_id, user_id, role) do nothing;
 
 insert into public.jwt_keys (kid, secret_ref, status, activated_at, max_token_expiry)

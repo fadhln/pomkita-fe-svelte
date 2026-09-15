@@ -1,4 +1,6 @@
 import { execFileSync } from 'node:child_process';
+import { readFile, readdir, stat } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 import type { APIRequestContext, Page } from '@playwright/test';
 
 const beBaseUrl = process.env.S5_BE_URL ?? `http://localhost:${process.env.S5_BE_PORT ?? '8180'}/api/v1`;
@@ -15,6 +17,30 @@ export const demo = {
 
 export function resetToSeed() {
 	execFileSync('sh', ['scripts/it-reset-seed.sh'], { stdio: 'inherit' });
+}
+
+export async function activationLinkFor(recipient: string) {
+	const spoolDirectory = process.env.S5_MAIL_SPOOL_DIR ?? resolve('test/e2e-integration/mail-spool');
+	const deadline = Date.now() + 30_000;
+	while (Date.now() < deadline) {
+		const entries = await readdir(spoolDirectory, { withFileTypes: true }).catch(() => []);
+		const messages = await Promise.all(entries.filter((entry) => entry.isFile() && entry.name.endsWith('.json')).map(async (entry) => {
+			const path = join(spoolDirectory, entry.name);
+			const [message, details] = await Promise.all([
+				readFile(path, 'utf8').then((value) => JSON.parse(value) as { to?: string; text_body?: string }).catch(() => undefined),
+				stat(path).catch(() => undefined)
+			]);
+			return message && details ? { message, modifiedAt: details.mtimeMs } : undefined;
+		}));
+		messages.sort((left, right) => (right?.modifiedAt ?? 0) - (left?.modifiedAt ?? 0));
+		for (const item of messages) {
+			if (item?.message.to !== recipient) continue;
+			const match = item.message.text_body?.match(/https?:\/\/[^\s]+\/aktivasi\?token=[^\s]+/u);
+			if (match) return match[0];
+		}
+		await new Promise((resolveWait) => setTimeout(resolveWait, 100));
+	}
+	throw new Error(`No activation message found for ${recipient}.`);
 }
 
 export async function login(page: Page, credentials: { username: string; password: string }) {
