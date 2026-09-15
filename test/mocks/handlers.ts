@@ -1,10 +1,20 @@
 import { http, HttpResponse, type RequestHandler } from 'msw';
+import type { Account } from '../../src/features/account/api';
 
 export const apiUrl = 'http://localhost:8080/api/v1';
 export const sessionFixture = {
 	user_id: '11111111-1111-4111-8111-111111111111', username: 'test.user', display_name: 'Test User', roles: ['Supervisor'],
 	org_id: '22222222-2222-4222-8222-222222222222', station_ids: ['33333333-3333-4333-8333-333333333333']
 } as const;
+export const accountFixture: Account = {
+	user_id: sessionFixture.user_id,
+	email: 'budi@example.com',
+	username: sessionFixture.username,
+	display_name: sessionFixture.display_name,
+	org: { id: sessionFixture.org_id, name: 'Organisasi PomKita' },
+	roles: ['Supervisor'],
+	stations: [sessionFixture.station_ids[0]]
+};
 export const shiftFixture = {
 	shift_id: '44444444-4444-4444-8444-444444444444', station_id: sessionFixture.station_ids[0], station_seq: 18,
 	supervisor_id: sessionFixture.user_id, opened_at: '2026-09-13T08:00:00Z', business_date: '2026-09-13', status: 'open'
@@ -21,6 +31,10 @@ export const draftFixture = {
 
 const submitRequests = new Map<string, string>();
 export function resetShiftFixtures() { submitRequests.clear(); }
+export function resetAccountFixtures() {
+	accountFixture.username = sessionFixture.username;
+	accountFixture.display_name = sessionFixture.display_name;
+}
 const validCredentials = { username: 'test.user', password: 'correct-password' };
 const problem = (type: string, title: string, status: number, detail: string) => ({ type, title, status, detail });
 
@@ -34,6 +48,16 @@ export const handlers: RequestHandler[] = [
 	}),
 	http.delete(`${apiUrl}/logout`, () => new HttpResponse(null, { status: 204 })),
 	http.get(`${apiUrl}/session`, () => HttpResponse.json(sessionFixture, { status: 200 })),
+	http.get(`${apiUrl}/account`, () => HttpResponse.json(accountFixture, { status: 200 })),
+	http.patch(`${apiUrl}/account`, async ({ request }) => {
+		const input = await request.json() as { display_name: string; username: string };
+		accountFixture.display_name = input.display_name;
+		accountFixture.username = input.username;
+		return HttpResponse.json(accountFixture, { status: 200 });
+	}),
+	http.post(`${apiUrl}/account/password`, () => new HttpResponse(null, { status: 204 })),
+	http.post(`${apiUrl}/auth/password/forgot`, () => new HttpResponse(null, { status: 202 })),
+	http.post(`${apiUrl}/auth/password/reset`, () => new HttpResponse(null, { status: 204 })),
 	http.get(`${apiUrl}/shifts`, () => HttpResponse.json([shiftFixture], { status: 200 })),
 	http.post(`${apiUrl}/shifts`, () => HttpResponse.json(openedShiftFixture, { status: 200 })),
 	http.get(`${apiUrl}/shifts/${shiftFixture.shift_id}`, () => HttpResponse.json(shiftDetailFixture, { status: 200 })),

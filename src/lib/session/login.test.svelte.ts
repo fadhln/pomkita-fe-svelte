@@ -28,6 +28,7 @@ describe('Masuk', () => {
 		expect(screen.queryByLabelText('Email')).not.toBeInTheDocument();
 		expect(screen.getByLabelText('Kata Sandi')).toBeRequired();
 		expect(screen.getByRole('button', { name: 'Masuk' })).toBeInTheDocument();
+		expect(screen.getByRole('link', { name: 'Lupa sandi?' })).toHaveAttribute('href', '/lupa-sandi');
 	});
 
 	it('shows the invalid-credential error', async () => {

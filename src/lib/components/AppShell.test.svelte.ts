@@ -7,5 +7,6 @@ describe('AppShell', () => {
 		render(AppShell);
 
 		expect(screen.getByRole('link', { name: 'Beranda' })).toBeInTheDocument();
+		expect(screen.getByRole('link', { name: 'Akun' })).toHaveAttribute('href', '/akun');
 	});
 });

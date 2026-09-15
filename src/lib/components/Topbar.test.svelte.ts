@@ -12,6 +12,11 @@ vi.mock('$app/navigation', () => navigation);
 afterEach(() => vi.clearAllMocks());
 
 describe('Topbar', () => {
+	it('places the account link near sign out', () => {
+		render(Topbar);
+		expect(screen.getByRole('link', { name: 'Akun' })).toHaveAttribute('href', '/akun');
+	});
+
 	it('logs out and returns to Masuk', async () => {
 		render(Topbar);
 		await fireEvent.click(screen.getByRole('button', { name: 'Keluar' }));

@@ -9,7 +9,7 @@ import { getSession } from '$lib/session/api';
 export const ssr = false;
 
 export const load: LayoutLoad = async ({ route }) => {
-	const isPublic = route.id === '/masuk' || route.id === '/aktivasi';
+	const isPublic = ['/masuk', '/aktivasi', '/lupa-sandi', '/reset-sandi'].includes(route.id ?? '');
 	if (isPublic) return { isLogin: true, session: null };
 
 	try {

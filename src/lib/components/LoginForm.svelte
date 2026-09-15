@@ -39,6 +39,7 @@
 		<label for="password">Kata Sandi</label>
 		<input id="password" name="password" type="password" autocomplete="current-password" bind:value={password} required disabled={pending} aria-invalid={invalidCredentials} />
 		<button type="submit" disabled={pending} aria-busy={pending}>Masuk</button>
+		<a class="forgot-link" href="/lupa-sandi">Lupa sandi?</a>
 	</form>
 </div>
 
@@ -60,4 +61,5 @@
 	button { margin-top: var(--space-2); background: var(--color-primary); color: white; font-weight: 700; cursor: pointer; }
 	button:disabled, input:disabled { cursor: wait; opacity: 0.65; }
 	.error { margin: 0 0 var(--space-2); color: var(--color-danger); font-size: 0.85rem; font-weight: 600; }
+	.forgot-link { color: var(--color-primary); font-size: .85rem; font-weight: 600; text-align: center; }
 </style>

@@ -23,6 +23,7 @@
 	</div>
 	<div class="topbar-actions">
 		<p class="connection-status"><span class="status-dot" aria-hidden="true"></span>Terhubung</p>
+		<a href="/akun">Akun</a>
 		<button type="button" disabled={pending} onclick={handleLogout}>Keluar</button>
 	</div>
 </header>
@@ -87,6 +88,12 @@
 		color: var(--color-primary);
 		font-weight: 700;
 		cursor: pointer;
+	}
+
+	a {
+		color: var(--color-primary);
+		font-size: .85rem;
+		font-weight: 700;
 	}
 
 	button:disabled {
