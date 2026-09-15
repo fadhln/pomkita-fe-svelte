@@ -7,10 +7,10 @@ export const sessionFixture = {
 	org_id: '22222222-2222-4222-8222-222222222222', station_ids: ['33333333-3333-4333-8333-333333333333']
 } as const;
 export const secondStationFixture = {
-	id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', name: 'Stasiun Timur', code: 'TMR', address: 'Jakarta Timur', timezone: 'Asia/Jakarta', enabled: true
+	station_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', name: 'Stasiun Timur', code: 'TMR', address: 'Jakarta Timur', timezone: 'Asia/Jakarta', enabled: true
 } as const;
 export const twoStationSessionFixture = {
-	...sessionFixture, station_ids: [sessionFixture.station_ids[0], secondStationFixture.id]
+	...sessionFixture, station_ids: [sessionFixture.station_ids[0], secondStationFixture.station_id]
 } as const;
 export const accountFixture: Account = {
 	user_id: sessionFixture.user_id,
@@ -35,16 +35,16 @@ export const draftFixture = {
 	status: 'editing', revision: shiftDetailFixture.revision, readings: [], sales: [], losses: []
 } as const;
 export const organizationFixture = {
-	id: sessionFixture.org_id, name: 'Organisasi PomKita', legal_name: 'PT PomKita Operasional', address: 'Jakarta', contact_email: 'admin@pomkita.id', timezone: 'Asia/Jakarta', enabled: true
+	org_id: sessionFixture.org_id, name: 'Organisasi PomKita', legal_name: 'PT PomKita Operasional', address: 'Jakarta', contact_email: 'admin@pomkita.id', timezone: 'Asia/Jakarta', enabled: true
 };
 export const stationFixture = {
-	id: sessionFixture.station_ids[0], name: 'Stasiun Utama', code: 'UTM', address: 'Jakarta', timezone: 'Asia/Jakarta', enabled: true
+	station_id: sessionFixture.station_ids[0], name: 'Stasiun Utama', code: 'UTM', address: 'Jakarta', timezone: 'Asia/Jakarta', enabled: true
 };
 export const userFixture = {
 	id: '77777777-7777-4777-8777-777777777777', email: 'operator@example.com', display_name: 'Operator PomKita', username: 'operator', enabled: true,
-	roles: [{ role: 'Operator', station_id: stationFixture.id, station_name: stationFixture.name }]
+	roles: [{ role: 'Operator', station_id: stationFixture.station_id, station_name: stationFixture.name }]
 };
-export const userDetailFixture = { ...userFixture, stations: [{ id: stationFixture.id, name: stationFixture.name }] };
+export const userDetailFixture = { ...userFixture, stations: [{ id: stationFixture.station_id, name: stationFixture.name }] };
 
 const submitRequests = new Map<string, string>();
 export function resetShiftFixtures() { submitRequests.clear(); }
@@ -75,15 +75,15 @@ export const handlers: RequestHandler[] = [
 	http.get(`${apiUrl}/users/${userFixture.id}/role-history`, () => HttpResponse.json([], { status: 200 })),
 	http.post(`${apiUrl}/users/${userFixture.id}/password-reset`, () => HttpResponse.json({ link: 'https://example.test/reset/fixture-token' }, { status: 200 })),
 	http.get(`${apiUrl}/organizations`, () => HttpResponse.json([organizationFixture], { status: 200 })),
-	http.get(`${apiUrl}/organizations/${organizationFixture.id}`, () => HttpResponse.json(organizationFixture, { status: 200 })),
-	http.post(`${apiUrl}/organizations`, async ({ request }) => HttpResponse.json({ ...organizationFixture, ...(await request.json() as Record<string, unknown>), id: 'org-created' }, { status: 201 })),
-	http.patch(`${apiUrl}/organizations/${organizationFixture.id}`, async ({ request }) => HttpResponse.json({ ...organizationFixture, ...(await request.json() as Record<string, unknown>) }, { status: 200 })),
-	http.post(`${apiUrl}/organizations/${organizationFixture.id}/disable`, () => new HttpResponse(null, { status: 204 })),
+	http.get(`${apiUrl}/organizations/${organizationFixture.org_id}`, () => HttpResponse.json(organizationFixture, { status: 200 })),
+	http.post(`${apiUrl}/organizations`, async ({ request }) => HttpResponse.json({ ...organizationFixture, ...(await request.json() as Record<string, unknown>), org_id: 'org-created' }, { status: 201 })),
+	http.patch(`${apiUrl}/organizations/${organizationFixture.org_id}`, async ({ request }) => HttpResponse.json({ ...organizationFixture, ...(await request.json() as Record<string, unknown>) }, { status: 200 })),
+	http.post(`${apiUrl}/organizations/${organizationFixture.org_id}/disable`, () => new HttpResponse(null, { status: 204 })),
 	http.get(`${apiUrl}/stations`, () => HttpResponse.json([stationFixture, secondStationFixture], { status: 200 })),
-	http.get(`${apiUrl}/stations/${stationFixture.id}`, () => HttpResponse.json(stationFixture, { status: 200 })),
-	http.post(`${apiUrl}/stations`, async ({ request }) => HttpResponse.json({ ...stationFixture, ...(await request.json() as Record<string, unknown>), id: 'station-created' }, { status: 201 })),
-	http.patch(`${apiUrl}/stations/${stationFixture.id}`, async ({ request }) => HttpResponse.json({ ...stationFixture, ...(await request.json() as Record<string, unknown>) }, { status: 200 })),
-	http.post(`${apiUrl}/stations/${stationFixture.id}/disable`, () => new HttpResponse(null, { status: 204 })),
+	http.get(`${apiUrl}/stations/${stationFixture.station_id}`, () => HttpResponse.json(stationFixture, { status: 200 })),
+	http.post(`${apiUrl}/stations`, async ({ request }) => HttpResponse.json({ ...stationFixture, ...(await request.json() as Record<string, unknown>), station_id: 'station-created' }, { status: 201 })),
+	http.patch(`${apiUrl}/stations/${stationFixture.station_id}`, async ({ request }) => HttpResponse.json({ ...stationFixture, ...(await request.json() as Record<string, unknown>) }, { status: 200 })),
+	http.post(`${apiUrl}/stations/${stationFixture.station_id}/disable`, () => new HttpResponse(null, { status: 204 })),
 	http.patch(`${apiUrl}/account`, async ({ request }) => {
 		const input = await request.json() as { display_name: string; username: string };
 		accountFixture.display_name = input.display_name;

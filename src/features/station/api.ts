@@ -11,20 +11,36 @@ export type Station = {
 
 export type StationInput = Omit<Station, 'id'>;
 
+function record(value: unknown): Record<string, unknown> {
+	return typeof value === 'object' && value !== null ? value as Record<string, unknown> : {};
+}
+
+function stationView(value: unknown): Station {
+	const source = record(value);
+	return {
+		id: String(source.station_id ?? source.id ?? ''),
+		name: String(source.name ?? ''),
+		code: typeof source.code === 'string' ? source.code : null,
+		address: String(source.address ?? ''),
+		timezone: String(source.timezone ?? ''),
+		enabled: Boolean(source.enabled)
+	};
+}
+
 export function getStations() {
-	return apiFetch<Station[]>('/stations').then((stations) => stations ?? []);
+	return apiFetch<unknown>('/stations').then((stations) => (Array.isArray(stations) ? stations : []).map(stationView));
 }
 
 export function getStation(id: string) {
-	return apiFetch<Station>(`/stations/${encodeURIComponent(id)}`);
+	return apiFetch<unknown>(`/stations/${encodeURIComponent(id)}`).then(stationView);
 }
 
 export function createStation(input: Omit<StationInput, 'enabled'>) {
-	return apiFetch<Station>('/stations', { method: 'POST', body: JSON.stringify(input) });
+	return apiFetch<unknown>('/stations', { method: 'POST', body: JSON.stringify(input) }).then(stationView);
 }
 
 export function updateStation(id: string, input: StationInput) {
-	return apiFetch<Station>(`/stations/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(input) });
+	return apiFetch<unknown>(`/stations/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(input) }).then(stationView);
 }
 
 export function disableStation(id: string) {
