@@ -6,6 +6,12 @@ export const sessionFixture = {
 	user_id: '11111111-1111-4111-8111-111111111111', username: 'test.user', display_name: 'Test User', roles: ['Supervisor'],
 	org_id: '22222222-2222-4222-8222-222222222222', station_ids: ['33333333-3333-4333-8333-333333333333']
 } as const;
+export const secondStationFixture = {
+	id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', name: 'Stasiun Timur', code: 'TMR', address: 'Jakarta Timur', timezone: 'Asia/Jakarta', enabled: true
+} as const;
+export const twoStationSessionFixture = {
+	...sessionFixture, station_ids: [sessionFixture.station_ids[0], secondStationFixture.id]
+} as const;
 export const accountFixture: Account = {
 	user_id: sessionFixture.user_id,
 	email: 'budi@example.com',
@@ -73,7 +79,7 @@ export const handlers: RequestHandler[] = [
 	http.post(`${apiUrl}/organizations`, async ({ request }) => HttpResponse.json({ ...organizationFixture, ...(await request.json() as Record<string, unknown>), id: 'org-created' }, { status: 201 })),
 	http.patch(`${apiUrl}/organizations/${organizationFixture.id}`, async ({ request }) => HttpResponse.json({ ...organizationFixture, ...(await request.json() as Record<string, unknown>) }, { status: 200 })),
 	http.post(`${apiUrl}/organizations/${organizationFixture.id}/disable`, () => new HttpResponse(null, { status: 204 })),
-	http.get(`${apiUrl}/stations`, () => HttpResponse.json([stationFixture], { status: 200 })),
+	http.get(`${apiUrl}/stations`, () => HttpResponse.json([stationFixture, secondStationFixture], { status: 200 })),
 	http.get(`${apiUrl}/stations/${stationFixture.id}`, () => HttpResponse.json(stationFixture, { status: 200 })),
 	http.post(`${apiUrl}/stations`, async ({ request }) => HttpResponse.json({ ...stationFixture, ...(await request.json() as Record<string, unknown>), id: 'station-created' }, { status: 201 })),
 	http.patch(`${apiUrl}/stations/${stationFixture.id}`, async ({ request }) => HttpResponse.json({ ...stationFixture, ...(await request.json() as Record<string, unknown>) }, { status: 200 })),

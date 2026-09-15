@@ -2,14 +2,16 @@
 	import type { Snippet } from 'svelte';
 	import Sidebar from './Sidebar.svelte';
 	import Topbar from './Topbar.svelte';
+	import type { StationOption } from '$lib/station/active';
 
-	let { children, session }: { children?: Snippet; session?: { roles?: string[] | null } | null } = $props();
+	type ShellSession = { roles?: string[] | null; station_ids?: string[] | null };
+	let { children, session, activeStationId, stations }: { children?: Snippet; session?: ShellSession | null; activeStationId?: string; stations?: StationOption[] } = $props();
 </script>
 
 <div class="shell">
 	<Sidebar {session} />
 	<div class="main-area">
-		<Topbar />
+		<Topbar {session} {activeStationId} {stations} />
 		<main class="content">{@render children?.()}</main>
 	</div>
 </div>

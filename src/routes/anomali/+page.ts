@@ -1,8 +1,9 @@
 import type { PageLoad } from './$types';
 import { getAnomalies } from '../../features/anomaly/api';
+import { activeStationForSession } from '$lib/station/active';
 
 export const load: PageLoad = async ({ parent }) => {
-	const session = (await parent()).session;
-	const stationId = session?.station_ids?.[0] ?? '';
+	const parentData = await parent();
+	const stationId = activeStationForSession(parentData.session, parentData.activeStationId);
 	return { anomalies: (await getAnomalies(stationId)) ?? [] };
 };

@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { logout } from '$lib/session/api';
+	import StationSwitcher from './StationSwitcher.svelte';
 
 	let pending = $state(false);
+	let { session, activeStationId, stations = [] }: { session?: { station_ids?: string[] | null } | null; activeStationId?: string; stations?: { id: string; name?: string | null }[] } = $props();
 
 	async function handleLogout() {
 		pending = true;
@@ -14,6 +16,7 @@
 			pending = false;
 		}
 	}
+
 </script>
 
 <header class="topbar">
@@ -22,6 +25,7 @@
 		<p class="topbar-title">Operasional harian</p>
 	</div>
 	<div class="topbar-actions">
+		<StationSwitcher {session} {activeStationId} {stations} />
 		<p class="connection-status"><span class="status-dot" aria-hidden="true"></span>Terhubung</p>
 		<a href="/akun">Akun</a>
 		<button type="button" disabled={pending} onclick={handleLogout}>Keluar</button>

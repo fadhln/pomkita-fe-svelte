@@ -2,8 +2,10 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { apiUrl } from '../../../test/mocks/handlers';
 import { server } from '../../../test/mocks/server';
+import { setActiveStationCookie } from '$lib/station/active';
 import {
 	claimDraft,
+	getShifts,
 	getShiftDetail,
 	openShift,
 	submitShift,
@@ -24,6 +26,17 @@ const ids = {
 } as const;
 
 describe('shift API', () => {
+	it('sends station scope as station_id and not as a cookie authority header', async () => {
+		setActiveStationCookie('station-2');
+		server.use(http.get(`${apiUrl}/shifts`, ({ request }) => {
+			expect(new URL(request.url).searchParams.get('station_id')).toBe('station-2');
+			expect(request.headers.get('X-Active-Station')).toBeNull();
+			return HttpResponse.json([]);
+		}));
+
+		await expect(getShifts('station-2')).resolves.toEqual([]);
+	});
+
 	it('uses the real shift and draft response shapes', async () => {
 		await expect(openShift({ station_id: ids.station, opened_at: '2026-09-13T08:00:00Z' })).resolves.toMatchObject({ shift_id: ids.shift, station_id: ids.station });
 		await expect(getShiftDetail(ids.shift, ids.station)).resolves.toMatchObject({ draft_id: ids.draft, revision: 2 });

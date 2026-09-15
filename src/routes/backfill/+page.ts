@@ -1,6 +1,8 @@
 import type { PageLoad } from './$types';
+import { activeStationForSession } from '$lib/station/active';
 
 export const load: PageLoad = async ({ parent }) => {
-	const session = (await parent()).session;
-	return { stationId: session?.station_ids?.[0] ?? '', approverId: session?.user_id ?? '' };
+	const parentData = await parent();
+	const stationId = activeStationForSession(parentData.session, parentData.activeStationId);
+	return { stationId, approverId: parentData.session?.user_id ?? '' };
 };

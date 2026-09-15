@@ -2,6 +2,8 @@ import { redirect } from '@sveltejs/kit';
 import type { LayoutLoad } from './$types';
 import { ApiError } from '$lib/api/client';
 import { getSession } from '$lib/session/api';
+import { getStations } from '../features/station/api';
+import { activeStationForSession, permittedStations } from '$lib/station/active';
 
 // Session resolution uses the browser session cookie, so the auth shell
 // renders on the client only. Server rendering would call the API without
@@ -13,7 +15,10 @@ export const load: LayoutLoad = async ({ route }) => {
 	if (isPublic) return { isLogin: true, session: null };
 
 	try {
-		return { isLogin: false, session: await getSession() };
+		const session = await getSession();
+		const stationId = activeStationForSession(session);
+		const stations = stationId ? await getStations().catch(() => []) : [];
+		return { isLogin: false, session, activeStationId: stationId, stations: permittedStations(session, stations) };
 	} catch (cause) {
 		if (cause instanceof ApiError && cause.status === 401) {
 			throw redirect(303, '/masuk');
