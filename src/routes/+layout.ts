@@ -10,7 +10,7 @@ export const load: LayoutLoad = async ({ route }) => {
 	try {
 		return { isLogin, session: await getSession() };
 	} catch (cause) {
-		if (cause instanceof ApiError && cause.status === 401 && ['invalid_session', 'session_idle'].includes(cause.body.code)) {
+		if (cause instanceof ApiError && cause.status === 401) {
 			throw redirect(303, '/masuk');
 		}
 		throw cause;
