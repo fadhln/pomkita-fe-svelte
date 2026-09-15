@@ -34,6 +34,11 @@ export const organizationFixture = {
 export const stationFixture = {
 	id: sessionFixture.station_ids[0], name: 'Stasiun Utama', code: 'UTM', address: 'Jakarta', timezone: 'Asia/Jakarta', enabled: true
 };
+export const userFixture = {
+	id: '77777777-7777-4777-8777-777777777777', email: 'operator@example.com', display_name: 'Operator PomKita', username: 'operator', enabled: true,
+	roles: [{ role: 'Operator', station_id: stationFixture.id, station_name: stationFixture.name }]
+};
+export const userDetailFixture = { ...userFixture, stations: [{ id: stationFixture.id, name: stationFixture.name }] };
 
 const submitRequests = new Map<string, string>();
 export function resetShiftFixtures() { submitRequests.clear(); }
@@ -55,6 +60,14 @@ export const handlers: RequestHandler[] = [
 	http.delete(`${apiUrl}/logout`, () => new HttpResponse(null, { status: 204 })),
 	http.get(`${apiUrl}/session`, () => HttpResponse.json(sessionFixture, { status: 200 })),
 	http.get(`${apiUrl}/account`, () => HttpResponse.json(accountFixture, { status: 200 })),
+	http.get(`${apiUrl}/users`, () => HttpResponse.json([userFixture], { status: 200 })),
+	http.post(`${apiUrl}/users`, async ({ request }) => HttpResponse.json({ ...userDetailFixture, ...(await request.json() as Record<string, unknown>), id: 'user-created' }, { status: 201 })),
+	http.get(`${apiUrl}/users/${userFixture.id}`, () => HttpResponse.json(userDetailFixture, { status: 200 })),
+	http.patch(`${apiUrl}/users/${userFixture.id}`, async ({ request }) => HttpResponse.json({ ...userDetailFixture, ...(await request.json() as Record<string, unknown>) }, { status: 200 })),
+	http.post(`${apiUrl}/users/${userFixture.id}/roles`, () => HttpResponse.json(userDetailFixture.roles, { status: 200 })),
+	http.delete(`${apiUrl}/users/${userFixture.id}/roles`, () => new HttpResponse(null, { status: 204 })),
+	http.get(`${apiUrl}/users/${userFixture.id}/role-history`, () => HttpResponse.json([], { status: 200 })),
+	http.post(`${apiUrl}/users/${userFixture.id}/password-reset`, () => HttpResponse.json({ link: 'https://example.test/reset/fixture-token' }, { status: 200 })),
 	http.get(`${apiUrl}/organizations`, () => HttpResponse.json([organizationFixture], { status: 200 })),
 	http.get(`${apiUrl}/organizations/${organizationFixture.id}`, () => HttpResponse.json(organizationFixture, { status: 200 })),
 	http.post(`${apiUrl}/organizations`, async ({ request }) => HttpResponse.json({ ...organizationFixture, ...(await request.json() as Record<string, unknown>), id: 'org-created' }, { status: 201 })),

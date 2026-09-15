@@ -35,6 +35,7 @@
 			{#if canManageMasterData}
 				<li><a href="/organisasi">Organisasi</a></li>
 				<li><a href="/stasiun">Stasiun</a></li>
+				<li><a href="/pengaturan/pengguna">Pengguna</a></li>
 			{/if}
 		</ul>
 	</nav>
