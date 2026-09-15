@@ -2,6 +2,7 @@ import { apiFetch } from '$lib/api/client';
 
 export type Session = {
 	user_id: string;
+	username: string;
 	display_name: string;
 	roles: string[] | null;
 	org_id: string;
@@ -9,7 +10,7 @@ export type Session = {
 };
 
 export type LoginInput = {
-	email: string;
+	username: string;
 	password: string;
 };
 

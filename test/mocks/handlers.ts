@@ -2,7 +2,7 @@ import { http, HttpResponse, type RequestHandler } from 'msw';
 
 export const apiUrl = 'http://localhost:8080/api/v1';
 export const sessionFixture = {
-	user_id: '11111111-1111-4111-8111-111111111111', display_name: 'Test User', roles: ['Supervisor'],
+	user_id: '11111111-1111-4111-8111-111111111111', username: 'test.user', display_name: 'Test User', roles: ['Supervisor'],
 	org_id: '22222222-2222-4222-8222-222222222222', station_ids: ['33333333-3333-4333-8333-333333333333']
 } as const;
 export const shiftFixture = {
@@ -21,14 +21,14 @@ export const draftFixture = {
 
 const submitRequests = new Map<string, string>();
 export function resetShiftFixtures() { submitRequests.clear(); }
-const validCredentials = { email: 'user@example.com', password: 'correct-password' };
+const validCredentials = { username: 'test.user', password: 'correct-password' };
 const problem = (type: string, title: string, status: number, detail: string) => ({ type, title, status, detail });
 
 export const handlers: RequestHandler[] = [
 	http.post(`${apiUrl}/login`, async ({ request }) => {
 		const credentials = (await request.json().catch(() => undefined)) as Partial<typeof validCredentials> | undefined;
-		if (credentials?.email !== validCredentials.email || credentials.password !== validCredentials.password) {
-			return HttpResponse.json(problem('https://example.com/problems/invalid-credentials', 'Unauthorized', 401, 'Email atau kata sandi salah.'), { status: 401 });
+		if (credentials?.username !== validCredentials.username || credentials.password !== validCredentials.password) {
+			return HttpResponse.json(problem('https://example.com/problems/invalid-credentials', 'Unauthorized', 401, 'Nama pengguna atau kata sandi salah.'), { status: 401 });
 		}
 		return new HttpResponse(null, { status: 204, headers: { 'Set-Cookie': 'pomkita_session=test-jwt; HttpOnly; SameSite=Lax; Path=/; Max-Age=900' } });
 	}),

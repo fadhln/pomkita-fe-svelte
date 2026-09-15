@@ -1,5 +1,5 @@
 export type ProblemError = { location?: string; message?: string; value?: unknown };
-export type ProblemDetails = { type?: string; title?: string; status?: number; detail?: string; errors?: ProblemError[] | null; instance?: string };
+export type ProblemDetails = { code?: string; type?: string; title?: string; status?: number; detail?: string; errors?: ProblemError[] | null; instance?: string };
 export type ApiErrorBody = {
 	code: string;
 	message: string;
@@ -51,6 +51,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function problemDetails(value: unknown): ProblemDetails {
 	if (!isRecord(value)) return {};
 	const problem: ProblemDetails = {};
+	if (typeof value.code === 'string') problem.code = value.code;
 	if (typeof value.type === 'string') problem.type = value.type; if (typeof value.title === 'string') problem.title = value.title;
 	if (typeof value.status === 'number') problem.status = value.status; if (typeof value.detail === 'string') problem.detail = value.detail;
 	if (typeof value.instance === 'string') problem.instance = value.instance;
@@ -61,6 +62,7 @@ function problemDetails(value: unknown): ProblemDetails {
 }
 
 function problemCode(problem: ProblemDetails, status: number) {
+	if (problem.code) return problem.code.toLowerCase();
 	const text = `${problem.type ?? ''} ${problem.title ?? ''} ${problem.detail ?? ''}`.toLowerCase();
 	if (text.includes('credential')) return 'invalid_credentials';
 	if (text.includes('session') && (text.includes('idle') || text.includes('expired'))) return 'session_idle';

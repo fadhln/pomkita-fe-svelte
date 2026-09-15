@@ -14,8 +14,8 @@ vi.mock('$app/navigation', () => navigation);
 
 afterEach(() => vi.clearAllMocks());
 
-function fillLoginForm(email: string, password: string) {
-	fireEvent.input(screen.getByLabelText('Email'), { target: { value: email } });
+function fillLoginForm(username: string, password: string) {
+	fireEvent.input(screen.getByLabelText('Nama pengguna'), { target: { value: username } });
 	fireEvent.input(screen.getByLabelText('Kata Sandi'), { target: { value: password } });
 }
 
@@ -24,7 +24,8 @@ describe('Masuk', () => {
 		render(LoginPage);
 
 		expect(screen.getByRole('heading', { name: 'Masuk' })).toBeInTheDocument();
-		expect(screen.getByLabelText('Email')).toBeRequired();
+		expect(screen.getByLabelText('Nama pengguna')).toBeRequired();
+		expect(screen.queryByLabelText('Email')).not.toBeInTheDocument();
 		expect(screen.getByLabelText('Kata Sandi')).toBeRequired();
 		expect(screen.getByRole('button', { name: 'Masuk' })).toBeInTheDocument();
 	});
@@ -32,19 +33,19 @@ describe('Masuk', () => {
 	it('shows the invalid-credential error', async () => {
 		server.use(
 			http.post(`${apiUrl}/login`, () =>
-				HttpResponse.json({ type: 'https://example.com/problems/invalid-credentials', title: 'Unauthorized', status: 401, detail: 'Email atau kata sandi salah.' }, { status: 401 })
+				HttpResponse.json({ type: 'https://example.com/problems/invalid-credentials', title: 'Unauthorized', status: 401, detail: 'Nama pengguna atau kata sandi salah.' }, { status: 401 })
 			)
 		);
 		render(LoginPage);
-		fillLoginForm('user@example.com', 'wrong-password');
+		fillLoginForm('test.user', 'wrong-password');
 		await fireEvent.submit(screen.getByRole('button', { name: 'Masuk' }).closest('form')!);
 
-		await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Email atau kata sandi salah'));
+		await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Nama pengguna atau kata sandi salah'));
 	});
 
 	it('invalidates the session and goes home after login', async () => {
 		render(LoginPage);
-		fillLoginForm('user@example.com', 'correct-password');
+		fillLoginForm('test.user', 'correct-password');
 		await fireEvent.submit(screen.getByRole('button', { name: 'Masuk' }).closest('form')!);
 
 		await waitFor(() => expect(navigation.goto).toHaveBeenCalledWith('/'));

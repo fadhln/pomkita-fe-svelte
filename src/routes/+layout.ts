@@ -9,11 +9,11 @@ import { getSession } from '$lib/session/api';
 export const ssr = false;
 
 export const load: LayoutLoad = async ({ route }) => {
-	const isLogin = route.id === '/masuk';
-	if (isLogin) return { isLogin, session: null };
+	const isPublic = route.id === '/masuk' || route.id === '/aktivasi';
+	if (isPublic) return { isLogin: true, session: null };
 
 	try {
-		return { isLogin, session: await getSession() };
+		return { isLogin: false, session: await getSession() };
 	} catch (cause) {
 		if (cause instanceof ApiError && cause.status === 401) {
 			throw redirect(303, '/masuk');

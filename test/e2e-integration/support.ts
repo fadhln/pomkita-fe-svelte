@@ -4,9 +4,9 @@ import type { APIRequestContext, Page } from '@playwright/test';
 const beBaseUrl = process.env.S5_BE_URL ?? `http://localhost:${process.env.S5_BE_PORT ?? '8180'}/api/v1`;
 
 export const demo = {
-	supervisor: { email: 'supervisor@demo.pomkita.test', password: 'demo-password' },
-	admin: { email: 'station-admin@demo.pomkita.test', password: 'demo-password' },
-	owner: { email: 'owner@demo.pomkita.test', password: 'demo-password' },
+	supervisor: { username: 'demo.supervisor', password: 'demo-password' },
+	admin: { username: 'demo.station-admin', password: 'demo-password' },
+	owner: { username: 'demo.owner', password: 'demo-password' },
 	stationId: '22222222-2222-4222-8222-222222222222',
 	dispenserId: '33333333-3333-4333-8333-333333333333',
 	nozzleId: '44444444-4444-4444-8444-444444444444',
@@ -17,9 +17,9 @@ export function resetToSeed() {
 	execFileSync('sh', ['scripts/it-reset-seed.sh'], { stdio: 'inherit' });
 }
 
-export async function login(page: Page, credentials: { email: string; password: string }) {
+export async function login(page: Page, credentials: { username: string; password: string }) {
 	await page.goto('/masuk', { waitUntil: 'networkidle' });
-	await page.getByLabel('Email').fill(credentials.email);
+	await page.getByLabel('Nama pengguna').fill(credentials.username);
 	await page.getByLabel('Kata Sandi').fill(credentials.password);
 	await page.getByRole('button', { name: 'Masuk' }).click();
 	await page.waitForURL(/\/$/u);
