@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, apiFetch, setSessionExpiredHandler } from './client';
+import { ApiError, apiFetch, apiFetchText, setSessionExpiredHandler } from './client';
 
 describe('apiFetch', () => {
 	afterEach(() => {
@@ -76,6 +76,18 @@ describe('apiFetch', () => {
 		await expect(apiFetch<{ liters: string }>('/report')).resolves.toEqual({
 			liters: '999999999999999999.123456'
 		});
+	});
+
+	it('keeps CSV mutation requests free of a JSON content type', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(new Response('laporan,csv', { status: 200 }));
+		vi.stubGlobal('fetch', fetchMock);
+
+		await expect(apiFetchText('/report.csv', { method: 'POST', body: 'filter' })).resolves.toBe('laporan,csv');
+
+		const headers = new Headers((fetchMock.mock.calls[0][1] as RequestInit).headers);
+		expect(headers.get('Accept')).toBe('text/csv');
+		expect(headers.get('Content-Type')).toBeNull();
+		expect(headers.get('X-Requested-With')).toBe('XMLHttpRequest');
 	});
 
 	it('notifies the session expiry handler for idle and invalid sessions', async () => {
