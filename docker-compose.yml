@@ -1,0 +1,77 @@
+name: pomkita-s5
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: pomkita_s5
+      POSTGRES_USER: pomkita
+      POSTGRES_PASSWORD: pomkita
+    volumes:
+      - pomkita-s5-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pomkita -d pomkita_s5"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  be:
+    build:
+      context: ${POMKITA_BE_DIR:-/root/spbu-recon/pomkita-be}
+      dockerfile: ${POMKITA_FE_DIR:-/root/spbu-recon/pomkita-fe-svelte}/docker/be.Dockerfile
+    environment:
+      PORT: "8080"
+      ENVIRONMENT: development
+      DATABASE_URL: postgres://pomkita:pomkita@postgres:5432/pomkita_s5?sslmode=disable
+      MIGRATIONS_DIR: /app/migrations
+      JWT_ISSUER: pomkita
+      JWT_AUDIENCE: spbu-recon
+      JWT_SECRET_KEY_1: pomkita-demo-only-secret
+      CORS_ALLOWED_ORIGINS: http://localhost:${S5_FE_PORT:-3100}
+    ports:
+      - "${S5_BE_PORT:-8180}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/ready"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  seed:
+    image: postgres:16-alpine
+    command:
+      - sh
+      - -ec
+      - psql postgres://pomkita:pomkita@postgres:5432/pomkita_s5?sslmode=disable -v ON_ERROR_STOP=1 -f /seed/s5-seed.sql -f /seed/s5-fixtures.sql
+    volumes:
+      - ./test/e2e-integration/s5-seed.sql:/seed/s5-seed.sql:ro
+      - ./test/e2e-integration/s5-fixtures.sql:/seed/s5-fixtures.sql:ro
+    depends_on:
+      be:
+        condition: service_healthy
+
+  fe:
+    image: node:22-alpine
+    working_dir: /app
+    command:
+      - sh
+      - -ec
+      - npm ci && npm run dev -- --host 0.0.0.0 --port 3000
+    environment:
+      NODE_ENV: development
+      VITE_API_BASE_URL: http://localhost:${S5_BE_PORT:-8180}/api/v1
+      VITE_API_INTERNAL_URL: http://be:8080/api/v1
+    ports:
+      - "${S5_FE_PORT:-3100}:3000"
+    volumes:
+      - .:/app
+      - pomkita-s5-node-modules:/app/node_modules
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+
+volumes:
+  pomkita-s5-postgres:
+  pomkita-s5-node-modules:

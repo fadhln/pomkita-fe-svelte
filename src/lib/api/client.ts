@@ -24,7 +24,9 @@ export class ApiError extends Error {
 
 export type SessionExpiredHandler = (error: ApiError) => void;
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
+const publicApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1';
+const serverApiBaseUrl = import.meta.env.VITE_API_INTERNAL_URL ?? publicApiBaseUrl;
+const apiBaseUrl = typeof window === 'undefined' ? serverApiBaseUrl : publicApiBaseUrl;
 let sessionExpiredHandler: SessionExpiredHandler | undefined;
 
 export function setSessionExpiredHandler(handler: SessionExpiredHandler | undefined) {

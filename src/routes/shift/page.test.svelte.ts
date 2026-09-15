@@ -24,7 +24,7 @@ describe('Shift', () => {
 		await fireEvent.click(screen.getByRole('button', { name: 'Buka shift' }));
 
 		await waitFor(() => expect(navigation.goto).toHaveBeenCalledWith('/shift/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'));
-		expect(body).toEqual({ station_id: '33333333-3333-4333-8333-333333333333', opened_at: '2026-09-15T08:00:00.000Z', backfilled: false, backfill_approver: '', backfill_reason: '', original_event_date: '2026-09-15', shift_ke: 0 });
+		expect(body).toEqual({ station_id: '33333333-3333-4333-8333-333333333333', opened_at: '2026-09-15T08:00:00.000Z', backfilled: false, backfill_approver: null, backfill_reason: '', original_event_date: '', shift_ke: 0 });
 		expect(navigation.invalidateAll).toHaveBeenCalled();
 	});
 });

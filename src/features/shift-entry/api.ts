@@ -29,7 +29,8 @@ export function draftFromShift(detail: ShiftDetail): DraftState {
 }
 export function openShift(input: OpenShiftInput) {
 	const openedAt = input.opened_at ?? new Date().toISOString();
-	const body = { station_id: input.station_id, opened_at: openedAt, backfilled: input.backfilled ?? false, backfill_approver: input.backfill_approver ?? '', backfill_reason: input.backfill_reason ?? '', original_event_date: input.original_event_date ?? openedAt.slice(0, 10), shift_ke: input.shift_ke ?? 0 };
+	const backfilled = input.backfilled ?? false;
+	const body = { station_id: input.station_id, opened_at: openedAt, backfilled, backfill_approver: input.backfill_approver ?? null, backfill_reason: backfilled ? input.backfill_reason ?? '' : '', original_event_date: backfilled ? input.original_event_date ?? openedAt.slice(0, 10) : '', shift_ke: backfilled ? input.shift_ke ?? 0 : 0 };
 	return apiFetch<Shift>('/shifts', { method: 'POST', body: JSON.stringify(body) });
 }
 export function claimDraft(input: ClaimDraftInput) { return apiFetch<{ draft_id: string; claim_token: string; claim_expires_at: string; revision: number }>('/drafts/claim', { method: 'POST', body: JSON.stringify(input) }); }
