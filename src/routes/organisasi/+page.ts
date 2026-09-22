@@ -1,9 +1,6 @@
 import type { PageLoad } from './$types';
 import { getOrganization, getOrganizations } from '../../features/organization/api';
-
-function hasRole(roles: string[] | null | undefined, role: string) {
-	return (roles ?? []).some((item) => item.toLowerCase() === role.toLowerCase());
-}
+import { hasRole } from '$lib/session/api';
 
 export const load: PageLoad = async ({ parent }) => {
 	const session = (await parent()).session;

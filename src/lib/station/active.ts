@@ -1,6 +1,6 @@
 import type { Session } from '$lib/session/api';
 
-export const activeStationCookie = 'pomkita_active_station';
+const activeStationCookie = 'pomkita_active_station';
 
 export type StationOption = { id: string; name?: string | null };
 
@@ -15,10 +15,6 @@ function browserCookieValue() {
 	}
 }
 
-export function readActiveStationCookie() {
-	return browserCookieValue();
-}
-
 export function setActiveStationCookie(stationId: string) {
 	if (typeof document !== 'undefined') {
 		document.cookie = `${activeStationCookie}=${encodeURIComponent(stationId)}; Path=/; SameSite=Lax`;
@@ -31,10 +27,10 @@ export function clearActiveStationCookie() {
 
 type StationSession = Pick<Session, 'station_ids'> | { station_ids?: string[] | null };
 
-export function activeStationForSession(session: StationSession | null | undefined, candidate = readActiveStationCookie()) {
+export function activeStationForSession(session: StationSession | null | undefined, candidate = browserCookieValue()) {
 	const stationIds = session?.station_ids ?? [];
 	const activeStation = candidate && stationIds.includes(candidate) ? candidate : stationIds[0] ?? '';
-	if (activeStation && activeStation !== readActiveStationCookie()) setActiveStationCookie(activeStation);
+	if (activeStation && activeStation !== browserCookieValue()) setActiveStationCookie(activeStation);
 	return activeStation;
 }
 

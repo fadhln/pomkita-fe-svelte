@@ -121,24 +121,8 @@ function requestOptions(
 	return { ...init, method, credentials: 'include', headers };
 }
 
-export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-	const response = await fetch(`${apiBaseUrl}${path}`, requestOptions(init, 'application/json', true));
-	const responseRequestId = response.headers.get('X-Request-ID') ?? undefined;
-	const decodedBody = parseJson(await response.text());
-
-	if (!response.ok) {
-		const body = decodeErrorBody(decodedBody, response.status);
-		if (responseRequestId) body.request_id = responseRequestId;
-		const error = new ApiError(response.status, body);
-		notifySessionExpiry(error);
-		throw error;
-	}
-
-	return decodedBody as T;
-}
-
-export async function apiFetchText(path: string, init?: RequestInit): Promise<string> {
-	const response = await fetch(`${apiBaseUrl}${path}`, requestOptions(init, 'text/csv', false));
+async function fetchApi<T>(path: string, init: RequestInit | undefined, accept: string, includeJsonContentType: boolean, parse: (value: string) => T): Promise<T> {
+	const response = await fetch(`${apiBaseUrl}${path}`, requestOptions(init, accept, includeJsonContentType));
 	const responseText = await response.text();
 	if (!response.ok) {
 		const body = decodeErrorBody(parseJson(responseText), response.status);
@@ -148,5 +132,13 @@ export async function apiFetchText(path: string, init?: RequestInit): Promise<st
 		notifySessionExpiry(error);
 		throw error;
 	}
-	return responseText;
+	return parse(responseText);
+}
+
+export function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+	return fetchApi(path, init, 'application/json', true, parseJson) as Promise<T>;
+}
+
+export function apiFetchText(path: string, init?: RequestInit): Promise<string> {
+	return fetchApi(path, init, 'text/csv', false, (value) => value);
 }

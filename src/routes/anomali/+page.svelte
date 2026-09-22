@@ -12,10 +12,8 @@
 </section>
 
 <style>
-	.page { display: grid; gap: var(--space-6); }
 	header { display: grid; gap: var(--space-2); }
 	h1, p { margin: 0; }
 	h1 { font-size: 2rem; }
-	.overline { color: var(--color-primary); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 	header p:last-child { color: var(--color-text-muted); }
 </style>

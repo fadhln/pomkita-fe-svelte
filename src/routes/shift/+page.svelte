@@ -31,9 +31,8 @@
 </section>
 
 <style>
-	.page { display: grid; gap: var(--space-6); }
 	.page-header p { margin: 0; color: var(--color-text-muted); }
-	.overline { margin-bottom: var(--space-2) !important; color: var(--color-primary) !important; font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+	.overline { margin-bottom: var(--space-2) !important; }
 	h1 { margin: 0 0 var(--space-2); font-size: 2rem; }
 	.panel { display: grid; gap: var(--space-3); padding: var(--space-5); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-soft); }
 	h2 { margin: 0; font-size: 1.05rem; }

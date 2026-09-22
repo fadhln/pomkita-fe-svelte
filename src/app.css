@@ -48,6 +48,9 @@ body {
 	margin: 0;
 }
 
+.page { display: grid; gap: var(--space-6); }
+.overline { color: var(--color-primary); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+
 button,
 input,
 textarea,

@@ -17,7 +17,6 @@
 	.page { display: grid; gap: var(--space-8); }
 	.page-header { display: grid; gap: var(--space-2); }
 	.page-header h1, .page-header p { margin: 0; }
-	.overline { color: var(--color-primary); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 	.page-header p:last-child { color: var(--color-text-muted); }
 	h1 { font-size: 2rem; }
 </style>

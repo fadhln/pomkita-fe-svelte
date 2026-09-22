@@ -31,10 +31,8 @@
 </section>
 
 <style>
-	.page { display: grid; gap: var(--space-6); }
 	.page-header { display: grid; gap: var(--space-2); }
 	.page-header p, h1 { margin: 0; }
 	.page-header > p:last-child { color: var(--color-text-muted); }
-	.overline { color: var(--color-primary); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 	.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--space-4); align-items: start; }
 </style>

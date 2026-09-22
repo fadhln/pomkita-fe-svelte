@@ -9,6 +9,10 @@ export type Session = {
 	station_ids: string[] | null;
 };
 
+export function hasRole(roles: string[] | null | undefined, role: string) {
+	return (roles ?? []).some((item) => item.toLowerCase() === role.toLowerCase());
+}
+
 export type LoginInput = {
 	username: string;
 	password: string;

@@ -19,6 +19,6 @@
 </section>
 
 <style>
-	.page, .list { display: grid; gap: var(--space-6); } header { display: grid; gap: var(--space-2); } h1, header p { margin: 0; } h1 { font-size: 2rem; } .overline { color: var(--color-primary); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; } header p:last-child { color: var(--color-text-muted); }
+	.list { display: grid; gap: var(--space-6); } header { display: grid; gap: var(--space-2); } h1, header p { margin: 0; } h1 { font-size: 2rem; } header p:last-child { color: var(--color-text-muted); }
 	.notice { display: grid; gap: var(--space-2); padding: var(--space-5); background: var(--color-primary-soft); border: 1px solid var(--color-border); border-radius: var(--radius-md); } .notice span, .empty { color: var(--color-text-muted); }
 </style>

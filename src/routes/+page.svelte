@@ -19,11 +19,6 @@
 </section>
 
 <style>
-	.page {
-		display: grid;
-		gap: var(--space-6);
-	}
-
 	.page-header {
 		display: flex;
 		align-items: end;
@@ -32,11 +27,6 @@
 
 	.overline {
 		margin: 0 0 var(--space-2);
-		color: var(--color-primary);
-		font-size: 0.72rem;
-		font-weight: 800;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
 	}
 
 	h1,
