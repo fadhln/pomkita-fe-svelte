@@ -18,7 +18,7 @@ export const load: LayoutLoad = async ({ route }) => {
 	try {
 		const session = await getSession();
 		const stationId = activeStationForSession(session);
-		const stations = stationId ? await getStations().catch(() => []) : [];
+		const stations = stationId ? await getStations(session.active_context?.org_id).catch(() => []) : [];
 		const organizations = hasRole(session.roles, 'Superadmin') ? await getOrganizations().catch(() => []) : [];
 		return { isLogin: false, session, activeStationId: stationId, stations: permittedStations(session, stations), organizations };
 	} catch (cause) {

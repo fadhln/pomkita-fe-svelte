@@ -25,9 +25,10 @@ export function clearActiveStationCookie() {
 	if (typeof document !== 'undefined') document.cookie = `${activeStationCookie}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
-type StationSession = Pick<Session, 'station_ids'> | { station_ids?: string[] | null };
+type StationSession = { station_ids?: string[] | null; active_context?: Session['active_context'] | null };
 
 export function activeStationForSession(session: StationSession | null | undefined, candidate = browserCookieValue()) {
+	if (session?.active_context?.station_id) return session.active_context.station_id;
 	const stationIds = session?.station_ids ?? [];
 	const activeStation = candidate && stationIds.includes(candidate) ? candidate : stationIds[0] ?? '';
 	if (activeStation && activeStation !== browserCookieValue()) setActiveStationCookie(activeStation);
@@ -36,5 +37,9 @@ export function activeStationForSession(session: StationSession | null | undefin
 
 export function permittedStations(session: StationSession | null | undefined, stations: StationOption[] = []) {
 	const stationDetails = new Map(stations.map((station) => [station.id, station]));
+	if (session?.active_context?.station_id) {
+		const id = session.active_context.station_id;
+		return [{ id, name: stationDetails.get(id)?.name ?? null }];
+	}
 	return (session?.station_ids ?? []).map((id) => ({ id, name: stationDetails.get(id)?.name ?? null }));
 }
