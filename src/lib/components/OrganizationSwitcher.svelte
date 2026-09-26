@@ -4,6 +4,7 @@
 	import { clearActiveStationCookie } from '$lib/station/active';
 	import { hasRole, type Session } from '$lib/session/api';
 	import { setActiveContext } from '$lib/session/activeContext';
+	import { hasUnsavedShiftEdits, onUnsavedShiftEditsChange } from '$lib/session/unsaved';
 	import type { Organization } from '../../features/organization/api';
 	import { getStations } from '../../features/station/api';
 
@@ -15,10 +16,16 @@
 	let isSuperadmin = $derived(hasRole(session?.roles, 'Superadmin'));
 	let pending = $state(false);
 	let error = $state('');
+	let shiftEditsUnsaved = $state(false);
+	$effect(() => onUnsavedShiftEditsChange(() => (shiftEditsUnsaved = hasUnsavedShiftEdits())));
 
 	async function handleOrganizationChange(event: Event) {
 		const orgId = (event.currentTarget as HTMLSelectElement).value;
 		if (!enabledOrganizations.some((organization) => organization.id === orgId) || orgId === activeOrganizationId) return;
+		if (shiftEditsUnsaved && !window.confirm('Perubahan shift yang belum disimpan akan hilang. Ganti konteks?')) {
+			selectedOrganizationId = activeOrganizationId;
+			return;
+		}
 		error = '';
 		pending = true;
 		try {

@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { ApiError } from '$lib/api/client';
 	import { claimDraft, heartbeatDraft, submitShift, uploadDraftEvidence, writeDraftLoss, writeDraftReading, writeDraftSales, type DraftLoss, type DraftState } from './api';
+	import { setUnsavedShiftEdits } from '$lib/session/unsaved';
 	import { isDraftConflict, validateLossRow } from './format';
 	import ReadingRow from './ReadingRow.svelte';
 	import SalesRow from './SalesRow.svelte';
@@ -26,6 +27,11 @@
 	let nozzles = $derived(draft.nozzles ?? draft.readings.map((reading) => ({ nozzle_id: reading.nozzle_id, meter_max: '' })));
 	let dispensers = $derived(draft.dispensers ?? []);
 	let requiredEvidenceMissing = $derived(draft.evidence_mode === 'wajib' && draft.losses.some((loss) => !draft.evidence?.some((item) => item.loss_row_id === loss.row_id)));
+
+	// Unsaved draft state guards the superadmin context switchers.
+	$effect(() => {
+		setUnsavedShiftEdits(draft.status !== 'submitted' && !awaitingConfirmation);
+	});
 
 	function id() { return globalThis.crypto?.randomUUID?.() ?? `shift-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
 	async function claim() {

@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiUrl } from '../../../test/mocks/handlers';
 import { server } from '../../../test/mocks/server';
+import { setUnsavedShiftEdits } from '$lib/session/unsaved';
 import OrganizationSwitcher from './OrganizationSwitcher.svelte';
 
 const navigation = vi.hoisted(() => ({ invalidateAll: vi.fn().mockResolvedValue(undefined) }));
@@ -16,7 +17,10 @@ const organizations = [
 
 const session = { roles: ['Superadmin'], org_id: 'org-z', active_context: null };
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+	vi.clearAllMocks();
+	setUnsavedShiftEdits(false);
+});
 
 describe('OrganizationSwitcher', () => {
 	it('is hidden for non-superadmins', () => {
@@ -65,6 +69,43 @@ describe('OrganizationSwitcher', () => {
 
 		await waitFor(() => expect(navigation.invalidateAll).toHaveBeenCalled());
 		expect(stationOrgId).toBe('org-a');
+		expect(activeContextBody).toEqual({ org_id: 'org-a', station_id: 'station-first' });
+	});
+
+	it('asks for confirmation and skips the change when shift edits are unsaved and the user cancels', async () => {
+		render(OrganizationSwitcher, { session, organizations });
+		const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+		let contextCalls = 0;
+		server.use(http.post(`${apiUrl}/session/active-context`, () => {
+			contextCalls += 1;
+			return HttpResponse.json({ active_context: { org_id: 'org-a', station_id: 'station-first' } });
+		}));
+		setUnsavedShiftEdits(true);
+
+		await fireEvent.change(screen.getByRole('combobox', { name: 'Organisasi aktif' }), { target: { value: 'org-a' } });
+
+		expect(confirm).toHaveBeenCalledWith('Perubahan shift yang belum disimpan akan hilang. Ganti konteks?');
+		expect(contextCalls).toBe(0);
+		expect(navigation.invalidateAll).not.toHaveBeenCalled();
+		expect(screen.getByRole('combobox', { name: 'Organisasi aktif' })).toHaveValue('org-z');
+	});
+
+	it('applies the change when shift edits are unsaved and the user confirms', async () => {
+		render(OrganizationSwitcher, { session, organizations });
+		vi.spyOn(window, 'confirm').mockReturnValue(true);
+		let activeContextBody: unknown;
+		server.use(
+			http.get(`${apiUrl}/stations`, () => HttpResponse.json([{ station_id: 'station-first', name: 'First', enabled: true }])),
+			http.post(`${apiUrl}/session/active-context`, async ({ request }) => {
+				activeContextBody = await request.json();
+				return HttpResponse.json({ active_context: { org_id: 'org-a', station_id: 'station-first' } });
+			})
+		);
+		setUnsavedShiftEdits(true);
+
+		await fireEvent.change(screen.getByRole('combobox', { name: 'Organisasi aktif' }), { target: { value: 'org-a' } });
+
+		await waitFor(() => expect(navigation.invalidateAll).toHaveBeenCalled());
 		expect(activeContextBody).toEqual({ org_id: 'org-a', station_id: 'station-first' });
 	});
 });
