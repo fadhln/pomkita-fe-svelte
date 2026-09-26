@@ -27,8 +27,9 @@ function stationView(value: unknown): Station {
 	};
 }
 
-export function getStations() {
-	return apiFetch<unknown>('/stations').then((stations) => (Array.isArray(stations) ? stations : []).map(stationView));
+export function getStations(orgId?: string) {
+	const query = orgId ? `?org_id=${encodeURIComponent(orgId)}` : '';
+	return apiFetch<unknown>(`/stations${query}`).then((stations) => (Array.isArray(stations) ? stations : []).map(stationView));
 }
 
 export function getStation(id: string) {

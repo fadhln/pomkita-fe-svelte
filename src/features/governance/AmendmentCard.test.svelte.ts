@@ -22,7 +22,7 @@ const amendment = {
 	Items: [{ ItemID: 'item-1', TargetKind: 'sales_declared', TargetLogicalID: 'sale-1', Field: 'cash_amount', OldValue: '"2000"', NewValue: '"2500"' }]
 };
 
-const session = { user_id: '99999999-9999-4999-8999-999999999999', username: 'admin.user', display_name: 'Admin', roles: ['Station Admin'], org_id: 'org-1', station_ids: [amendment.StationID] };
+const session = { user_id: '99999999-9999-4999-8999-999999999999', username: 'admin.user', display_name: 'Admin', roles: ['Station Admin'], org_id: 'org-1', station_ids: [amendment.StationID], active_context: null };
 
 describe('AmendmentCard', () => {
 	it('shows requester and sends the exact queue hash when approving', async () => {

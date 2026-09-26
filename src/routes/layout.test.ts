@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { apiUrl } from '../../test/mocks/handlers';
+import { server } from '../../test/mocks/server';
 import { load } from './+layout';
 
 describe('root layout load', () => {
@@ -28,5 +31,24 @@ describe('root layout load', () => {
 			isLogin: false,
 			session: { display_name: 'Test User' }
 		});
+	});
+
+	it('uses the server-returned superadmin context after a layout reload', async () => {
+		const contextSession = {
+			user_id: 'user-superadmin', username: 'root', display_name: 'Root', roles: ['Superadmin'],
+			org_id: 'org-original', station_ids: [],
+			active_context: { org_id: 'org-selected', station_id: 'station-selected' }
+		};
+		server.use(
+			http.get(`${apiUrl}/session`, () => HttpResponse.json(contextSession)),
+			http.get(`${apiUrl}/stations`, ({ request }) => {
+				expect(new URL(request.url).searchParams.get('org_id')).toBe('org-selected');
+				return HttpResponse.json([{ station_id: 'station-selected', name: 'Scoped station', enabled: true }]);
+			})
+		);
+
+		const result = await load({ route: { id: '/' } } as never);
+
+		expect(result).toMatchObject({ session: contextSession, activeStationId: 'station-selected', stations: [{ id: 'station-selected', name: 'Scoped station' }] });
 	});
 });

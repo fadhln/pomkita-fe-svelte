@@ -7,6 +7,7 @@ export type Session = {
 	roles: string[] | null;
 	org_id: string;
 	station_ids: string[] | null;
+	active_context: { org_id: string; station_id: string } | null;
 };
 
 export function hasRole(roles: string[] | null | undefined, role: string) {

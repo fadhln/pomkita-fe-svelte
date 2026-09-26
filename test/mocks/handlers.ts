@@ -4,7 +4,7 @@ import type { Account } from '../../src/features/account/api';
 export const apiUrl = 'http://localhost:8080/api/v1';
 export const sessionFixture = {
 	user_id: '11111111-1111-4111-8111-111111111111', username: 'test.user', display_name: 'Test User', roles: ['Supervisor'],
-	org_id: '22222222-2222-4222-8222-222222222222', station_ids: ['33333333-3333-4333-8333-333333333333']
+	org_id: '22222222-2222-4222-8222-222222222222', station_ids: ['33333333-3333-4333-8333-333333333333'], active_context: null
 } as const;
 export const secondStationFixture = {
 	station_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', name: 'Stasiun Timur', code: 'TMR', address: 'Jakarta Timur', timezone: 'Asia/Jakarta', enabled: true
