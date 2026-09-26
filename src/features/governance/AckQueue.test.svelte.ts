@@ -13,7 +13,7 @@ const shift = { shift_id: '44444444-4444-4444-8444-444444444444', station_id: st
 const report = { report_id: shift.current_report_id, station_id: stationId, shift_id: shift.shift_id, version_no: 2, status: 'submitted', submitted_at: '2026-09-13T04:00:00.000Z', readings: [], sales: [], losses: [] };
 
 function renderQueue(roles = ['Station Admin']) {
-	return render(AckQueue, { shifts: [shift], session: { user_id: '99999999-9999-4999-8999-999999999999', username: 'admin.user', display_name: 'Admin', roles, org_id: 'org-1', station_ids: [stationId] } });
+	return render(AckQueue, { shifts: [shift], session: { user_id: '99999999-9999-4999-8999-999999999999', username: 'admin.user', display_name: 'Admin', roles, org_id: 'org-1', station_ids: [stationId], active_context: null } });
 }
 
 describe('AckQueue', () => {

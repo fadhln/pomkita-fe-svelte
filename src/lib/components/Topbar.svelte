@@ -2,9 +2,11 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { logout } from '$lib/session/api';
 	import StationSwitcher from './StationSwitcher.svelte';
+	import OrganizationSwitcher from './OrganizationSwitcher.svelte';
+	import type { Organization } from '../../features/organization/api';
 
 	let pending = $state(false);
-	let { session, activeStationId, stations = [] }: { session?: { station_ids?: string[] | null } | null; activeStationId?: string; stations?: { id: string; name?: string | null }[] } = $props();
+	let { session, activeStationId, stations = [], organizations = [] }: { session?: { station_ids?: string[] | null; roles?: string[] | null; org_id?: string; active_context?: { org_id: string; station_id: string } | null } | null; activeStationId?: string; stations?: { id: string; name?: string | null }[]; organizations?: Organization[] } = $props();
 
 	async function handleLogout() {
 		pending = true;
@@ -26,6 +28,7 @@
 	</div>
 	<div class="topbar-actions">
 		<StationSwitcher {session} {activeStationId} {stations} />
+		<OrganizationSwitcher {session} {organizations} />
 		<p class="connection-status"><span class="status-dot" aria-hidden="true"></span>Terhubung</p>
 		<a href="/akun">Akun</a>
 		<button type="button" disabled={pending} onclick={handleLogout}>Keluar</button>

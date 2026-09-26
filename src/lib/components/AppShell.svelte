@@ -5,13 +5,13 @@
 	import type { StationOption } from '$lib/station/active';
 
 	type ShellSession = { roles?: string[] | null; station_ids?: string[] | null };
-	let { children, session, activeStationId, stations }: { children?: Snippet; session?: ShellSession | null; activeStationId?: string; stations?: StationOption[] } = $props();
+	let { children, session, activeStationId, stations, organizations }: { children?: Snippet; session?: ShellSession | null; activeStationId?: string; stations?: StationOption[]; organizations?: import('../../features/organization/api').Organization[] } = $props();
 </script>
 
 <div class="shell">
 	<Sidebar {session} />
 	<div class="main-area">
-		<Topbar {session} {activeStationId} {stations} />
+		<Topbar {session} {activeStationId} {stations} {organizations} />
 		<main class="content">{@render children?.()}</main>
 	</div>
 </div>
