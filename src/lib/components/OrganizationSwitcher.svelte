@@ -9,20 +9,23 @@
 
 	let { session, organizations = [], onchanged }: { session?: { roles?: string[] | null; org_id?: string; active_context?: Session['active_context'] } | null; organizations?: Organization[]; onchanged?: () => void } = $props();
 	let enabledOrganizations = $derived(organizations.filter((organization) => organization.enabled).toSorted((a, b) => a.name.localeCompare(b.name)));
-	let selectedOrganizationId = $derived(session?.active_context?.org_id ?? session?.org_id ?? '');
+	let selectedOrganizationId = $state('');
+	let activeOrganizationId = $derived(session?.active_context?.org_id ?? session?.org_id ?? '');
+	$effect(() => { selectedOrganizationId = activeOrganizationId; });
 	let isSuperadmin = $derived(hasRole(session?.roles, 'Superadmin'));
 	let pending = $state(false);
 	let error = $state('');
 
 	async function handleOrganizationChange(event: Event) {
 		const orgId = (event.currentTarget as HTMLSelectElement).value;
-		if (!enabledOrganizations.some((organization) => organization.id === orgId) || orgId === selectedOrganizationId) return;
+		if (!enabledOrganizations.some((organization) => organization.id === orgId) || orgId === activeOrganizationId) return;
 		error = '';
 		pending = true;
 		try {
 			const stations = await getStations(orgId);
 			const firstEnabledStation = stations.find((station) => station.enabled);
 			if (!firstEnabledStation) {
+				selectedOrganizationId = session?.active_context?.org_id ?? session?.org_id ?? '';
 				error = 'Tidak ada stasiun aktif';
 				return;
 			}
@@ -32,6 +35,7 @@
 			await invalidateAll();
 			onchanged?.();
 		} catch (cause) {
+			selectedOrganizationId = session?.active_context?.org_id ?? session?.org_id ?? '';
 			if (cause instanceof ApiError && (cause.status === 403 || cause.status === 404)) {
 				error = cause.status === 404 ? 'Organisasi atau stasiun tidak ditemukan' : 'Tidak dapat mengganti organisasi';
 			} else {
@@ -45,7 +49,7 @@
 
 {#if isSuperadmin}
 	<div class="organization-control">
-		<label class="organization-switcher" for="active-organization">Organisasi aktif<select id="active-organization" aria-label="Organisasi aktif" value={selectedOrganizationId} onchange={handleOrganizationChange} disabled={pending}>{#each enabledOrganizations as organization (organization.id)}<option value={organization.id}>{organization.name}</option>{/each}</select></label>
+		<label class="organization-switcher" for="active-organization">Organisasi aktif<select id="active-organization" aria-label="Organisasi aktif" bind:value={selectedOrganizationId} onchange={handleOrganizationChange} disabled={pending}>{#each enabledOrganizations as organization (organization.id)}<option value={organization.id}>{organization.name}</option>{/each}</select></label>
 		{#if error}<span class="organization-error" role="alert">{error}</span>{/if}
 	</div>
 {/if}

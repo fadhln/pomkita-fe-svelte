@@ -31,6 +31,17 @@ describe('OrganizationSwitcher', () => {
 		expect(screen.getByRole('combobox', { name: 'Organisasi aktif' })).toHaveValue('org-z');
 	});
 
+	it('shows a not-found error and restores the server-selected organization', async () => {
+		server.use(http.get(`${apiUrl}/stations`, () => HttpResponse.json({ detail: 'missing' }, { status: 404 })));
+		render(OrganizationSwitcher, { session, organizations });
+
+		await fireEvent.change(screen.getByRole('combobox', { name: 'Organisasi aktif' }), { target: { value: 'org-a' } });
+
+		await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Organisasi atau stasiun tidak ditemukan'));
+		expect(screen.getByRole('combobox', { name: 'Organisasi aktif' })).toHaveValue('org-z');
+		expect(navigation.invalidateAll).not.toHaveBeenCalled();
+	});
+
 	it('sets the selected organization with its first enabled station and reloads the route', async () => {
 		let activeContextBody: unknown;
 		let stationOrgId: string | null = null;
