@@ -105,6 +105,50 @@ describe('StationSwitcher for a superadmin session', () => {
 		await waitFor(() => expect(navigation.invalidateAll).toHaveBeenCalled());
 		expect(activeContextBody).toEqual({ org_id: 'org-selected', station_id: 'station-other' });
 	});
+
+	it('includes disabled stations in the list and marks them as arsip', () => {
+		render(StationSwitcher, {
+			session: superadminSession,
+			stations: [...stations, { id: 'station-arsip', name: 'Stasiun Arsip', enabled: false }],
+			activeStationId: 'station-selected'
+		});
+
+		expect(screen.getByRole('option', { name: 'Stasiun Arsip (nonaktif)' })).toBeInTheDocument();
+		expect(screen.getByRole('option', { name: 'Stasiun Utama' })).toBeInTheDocument();
+	});
+
+	it('shows the read-only scope notice after selecting a disabled station', async () => {
+		let activeContextBody: unknown;
+		const scopedSession = { ...superadminSession, active_context: { org_id: 'org-selected', station_id: 'station-selected' } };
+		server.use(http.post(`${apiUrl}/session/active-context`, async ({ request }) => {
+			activeContextBody = await request.json();
+			scopedSession.active_context = { org_id: 'org-selected', station_id: 'station-arsip' };
+			return HttpResponse.json({ active_context: scopedSession.active_context });
+		}));
+		render(StationSwitcher, {
+			session: scopedSession,
+			stations: [...stations, { id: 'station-arsip', name: 'Stasiun Arsip', enabled: false }],
+			activeStationId: 'station-selected'
+		});
+
+		await fireEvent.change(screen.getByRole('combobox', { name: 'Stasiun aktif' }), { target: { value: 'station-arsip' } });
+
+		await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Mode baca'));
+		expect(activeContextBody).toEqual({ org_id: 'org-selected', station_id: 'station-arsip' });
+		expect(screen.getByRole('combobox', { name: 'Stasiun aktif' })).toHaveValue('station-arsip');
+	});
+
+	it('does not show the read-only notice for an enabled station', async () => {
+		server.use(http.post(`${apiUrl}/session/active-context`, () =>
+			HttpResponse.json({ active_context: { org_id: 'org-selected', station_id: 'station-other' } })
+		));
+		render(StationSwitcher, options(superadminSession));
+
+		await fireEvent.change(screen.getByRole('combobox', { name: 'Stasiun aktif' }), { target: { value: 'station-other' } });
+
+		await waitFor(() => expect(navigation.invalidateAll).toHaveBeenCalled());
+		expect(screen.queryByRole('status')).not.toBeInTheDocument();
+	});
 });
 
 describe('StationSwitcher for a non-superadmin session', () => {

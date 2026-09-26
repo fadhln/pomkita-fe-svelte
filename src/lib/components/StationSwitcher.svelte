@@ -7,10 +7,26 @@
 	import { hasUnsavedShiftEdits, onUnsavedShiftEditsChange } from '$lib/session/unsaved';
 
 	type StationSession = { station_ids?: string[] | null; roles?: string[] | null; org_id?: string; active_context?: { org_id: string; station_id: string } | null };
-	let { session, activeStationId, stations = [] }: { session?: StationSession | null; activeStationId?: string; stations?: StationOption[] } = $props();
+type ScopedStation = StationOption & { enabled?: boolean };
+
+	let { session, activeStationId, stations = [] }: { session?: StationSession | null; activeStationId?: string; stations?: (StationOption | ScopedStation)[] } = $props();
 	let selectedStationId = $state('');
 	let isSuperadmin = $derived(hasRole(session?.roles, 'Superadmin'));
-	let stationOptions = $derived(isSuperadmin ? permittedStations(session, stations, 'organization') : permittedStations(session, stations));
+	let stationOptions = $derived(
+		(isSuperadmin ? permittedStations(session, stations, 'organization') : permittedStations(session, stations)).map((option) => ({
+			...option,
+			enabled: (option as ScopedStation).enabled !== false
+		}))
+	);
+	// Local mirror of the server active context so the scope notice reacts
+	// to the switcher's own update before the parent reloads the session.
+	let activeContextStationId = $state('');
+	$effect(() => {
+		activeContextStationId = session?.active_context?.station_id ?? '';
+	});
+	let scopedActiveStationId = $derived(activeContextStationId || activeStationForSession(session, activeStationId));
+	let activeStation = $derived(stationOptions.find((station) => station.id === scopedActiveStationId) ?? stationOptions[0]);
+	let readOnlyScope = $derived(Boolean(session?.active_context?.station_id) && activeStation?.enabled === false);
 	let hasMultipleStations = $derived(stationOptions.length > 1);
 	let pending = $state(false);
 	let error = $state('');
@@ -36,6 +52,7 @@
 			try {
 				await setActiveContext(activeOrgId, nextStationId);
 				// Server active_context owns the station selection for superadmins.
+				activeContextStationId = nextStationId;
 				clearActiveStationCookie();
 				await invalidateAll();
 			} catch (cause) {
@@ -53,7 +70,8 @@
 </script>
 
 {#if hasMultipleStations}
-	<label class="station-switcher" for="active-station">Stasiun aktif<select id="active-station" aria-label="Stasiun aktif" bind:value={selectedStationId} onchange={handleStationChange} disabled={pending}>{#each stationOptions as station (station.id)}<option value={station.id}>{station.name || station.id}</option>{/each}</select></label>
+	<label class="station-switcher" for="active-station">Stasiun aktif<select id="active-station" aria-label="Stasiun aktif" bind:value={selectedStationId} onchange={handleStationChange} disabled={pending}>{#each stationOptions as station (station.id)}<option value={station.id}>{(station.name || station.id) + (station.enabled ? '' : ' (nonaktif)')}</option>{/each}</select></label>
+	{#if readOnlyScope}<p class="scope-notice" role="status">Mode baca: scope nonaktif, hanya untuk tinjauan historis.</p>{/if}
 	{#if error}<span class="station-error" role="alert">{error}</span>{/if}
 {:else if stationOptions.length === 1}
 	<span class="station-name">{stationOptions[0].name || stationOptions[0].id}</span>
@@ -85,5 +103,12 @@
 	.station-error {
 		color: var(--color-danger, #b42318);
 		font-size: 0.72rem;
+	}
+
+	.scope-notice {
+		margin: 0;
+		color: var(--color-text-muted);
+		font-size: 0.72rem;
+		font-weight: 700;
 	}
 </style>

@@ -51,4 +51,29 @@ describe('root layout load', () => {
 
 		expect(result).toMatchObject({ session: contextSession, activeStationId: 'station-selected', stations: [{ id: 'station-selected', name: 'Scoped station' }] });
 	});
+
+	it('passes the organization station list with enabled flags to superadmin scope selection', async () => {
+		const contextSession = {
+			user_id: 'user-superadmin', username: 'root', display_name: 'Root', roles: ['Superadmin'],
+			org_id: 'org-original', station_ids: [],
+			active_context: { org_id: 'org-selected', station_id: 'station-selected' }
+		};
+		server.use(
+			http.get(`${apiUrl}/session`, () => HttpResponse.json(contextSession)),
+			http.get(`${apiUrl}/stations`, () => HttpResponse.json([
+				{ station_id: 'station-selected', name: 'Stasiun Utama', enabled: true },
+				{ station_id: 'station-arsip', name: 'Stasiun Arsip', enabled: false }
+			]))
+		);
+
+		const result = await load({ route: { id: '/' } } as never);
+
+		expect(result).toMatchObject({
+			activeStationId: 'station-selected',
+			scopeStations: [
+				{ id: 'station-selected', name: 'Stasiun Utama', enabled: true },
+				{ id: 'station-arsip', name: 'Stasiun Arsip', enabled: false }
+			]
+		});
+	});
 });

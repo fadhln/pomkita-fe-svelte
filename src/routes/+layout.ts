@@ -18,9 +18,18 @@ export const load: LayoutLoad = async ({ route }) => {
 	try {
 		const session = await getSession();
 		const stationId = activeStationForSession(session);
+		const isSuperadmin = hasRole(session.roles, 'Superadmin');
 		const stations = stationId ? await getStations(session.active_context?.org_id).catch(() => []) : [];
-		const organizations = hasRole(session.roles, 'Superadmin') ? await getOrganizations().catch(() => []) : [];
-		return { isLogin: false, session, activeStationId: stationId, stations: permittedStations(session, stations), organizations };
+		const organizations = isSuperadmin ? await getOrganizations().catch(() => []) : [];
+		return {
+			isLogin: false,
+			session,
+			activeStationId: stationId,
+			stations: permittedStations(session, stations),
+			// Superadmins pick a disabled scope for historical reads; keep the flag.
+			scopeStations: isSuperadmin ? stations : undefined,
+			organizations
+		};
 	} catch (cause) {
 		if (cause instanceof ApiError && cause.status === 401) {
 			throw redirect(303, '/masuk');
