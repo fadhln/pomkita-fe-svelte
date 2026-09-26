@@ -4,6 +4,7 @@
 	import { hasRole } from '$lib/session/api';
 	import { setActiveContext } from '$lib/session/activeContext';
 	import { activeStationForSession, permittedStations, setActiveStationCookie, clearActiveStationCookie, type StationOption } from '$lib/station/active';
+	import { hasUnsavedShiftEdits, onUnsavedShiftEditsChange } from '$lib/session/unsaved';
 
 	type StationSession = { station_ids?: string[] | null; roles?: string[] | null; org_id?: string; active_context?: { org_id: string; station_id: string } | null };
 	let { session, activeStationId, stations = [] }: { session?: StationSession | null; activeStationId?: string; stations?: StationOption[] } = $props();
@@ -13,17 +14,18 @@
 	let hasMultipleStations = $derived(stationOptions.length > 1);
 	let pending = $state(false);
 	let error = $state('');
+	let shiftEditsUnsaved = $state(false);
+	$effect(() => onUnsavedShiftEditsChange(() => (shiftEditsUnsaved = hasUnsavedShiftEdits())));
 
 	$effect(() => {
 		selectedStationId = activeStationForSession(session, activeStationId);
 	});
 
-
 	async function handleStationChange(event: Event) {
 		const nextStationId = (event.currentTarget as HTMLSelectElement).value;
 		const serverStationId = activeStationForSession(session, activeStationId);
 		if (!stationOptions.some((station) => station.id === nextStationId) || nextStationId === serverStationId) return;
-		if (window.location.pathname.startsWith('/shift/') && !window.confirm('Perubahan yang belum disimpan akan hilang. Ganti stasiun?')) {
+		if (shiftEditsUnsaved && !window.confirm('Perubahan shift yang belum disimpan akan hilang. Ganti konteks?')) {
 			selectedStationId = serverStationId;
 			return;
 		}

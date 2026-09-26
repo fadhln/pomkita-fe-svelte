@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiUrl } from '../../../test/mocks/handlers';
 import { server } from '../../../test/mocks/server';
 import { clearActiveStationCookie } from '$lib/station/active';
+import { setUnsavedShiftEdits } from '$lib/session/unsaved';
 import { load as shiftLoad } from '../../routes/shift/+page';
 import Topbar from './Topbar.svelte';
 
@@ -17,6 +18,7 @@ vi.mock('$app/navigation', () => navigation);
 afterEach(() => {
 	vi.clearAllMocks();
 	clearActiveStationCookie();
+	setUnsavedShiftEdits(false);
 	window.history.replaceState({}, '', '/');
 });
 
@@ -85,13 +87,13 @@ describe('Topbar', () => {
 	});
 
 	it('asks for confirmation before switching on shift entry', async () => {
-		window.history.replaceState({}, '', '/shift/shift-1');
-		const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
 		render(Topbar, { session: twoStations, stations: [{ id: 'station-1' }, { id: 'station-2' }] });
+		setUnsavedShiftEdits(true);
+		const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
 		await fireEvent.change(screen.getByRole('combobox', { name: 'Stasiun aktif' }), { target: { value: 'station-2' } });
 
-		expect(confirm).toHaveBeenCalledWith('Perubahan yang belum disimpan akan hilang. Ganti stasiun?');
+		expect(confirm).toHaveBeenCalledWith('Perubahan shift yang belum disimpan akan hilang. Ganti konteks?');
 		expect(navigation.invalidateAll).not.toHaveBeenCalled();
 	});
 });

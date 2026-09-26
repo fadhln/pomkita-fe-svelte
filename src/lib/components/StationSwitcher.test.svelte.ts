@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiUrl } from '../../../test/mocks/handlers';
 import { server } from '../../../test/mocks/server';
+import { setUnsavedShiftEdits } from '$lib/session/unsaved';
 import StationSwitcher from './StationSwitcher.svelte';
 
 const navigation = vi.hoisted(() => ({ invalidateAll: vi.fn().mockResolvedValue(undefined) }));
@@ -20,6 +21,7 @@ const options = (session: typeof superadminSession) => ({ session, stations, act
 
 afterEach(() => {
 	vi.clearAllMocks();
+	setUnsavedShiftEdits(false);
 	document.cookie = 'pomkita_active_station=; Path=/; Max-Age=0';
 });
 
@@ -69,6 +71,40 @@ describe('StationSwitcher for a superadmin session', () => {
 		await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Tidak dapat mengganti stasiun'));
 		expect(screen.getByRole('combobox', { name: 'Stasiun aktif' })).toHaveValue('station-selected');
 	});
+
+	it('asks for confirmation and keeps the server station when unsaved edits exist and the user cancels', async () => {
+		render(StationSwitcher, options(superadminSession));
+		const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+		let contextCalls = 0;
+		server.use(http.post(`${apiUrl}/session/active-context`, () => {
+			contextCalls += 1;
+			return HttpResponse.json({ active_context: { org_id: 'org-selected', station_id: 'station-other' } });
+		}));
+		setUnsavedShiftEdits(true);
+
+		await fireEvent.change(screen.getByRole('combobox', { name: 'Stasiun aktif' }), { target: { value: 'station-other' } });
+
+		expect(confirm).toHaveBeenCalledWith('Perubahan shift yang belum disimpan akan hilang. Ganti konteks?');
+		expect(contextCalls).toBe(0);
+		expect(navigation.invalidateAll).not.toHaveBeenCalled();
+		expect(screen.getByRole('combobox', { name: 'Stasiun aktif' })).toHaveValue('station-selected');
+	});
+
+	it('applies the change when unsaved edits exist and the user confirms', async () => {
+		vi.spyOn(window, 'confirm').mockReturnValue(true);
+		let activeContextBody: unknown;
+		server.use(http.post(`${apiUrl}/session/active-context`, async ({ request }) => {
+			activeContextBody = await request.json();
+			return HttpResponse.json({ active_context: { org_id: 'org-selected', station_id: 'station-other' } });
+		}));
+		setUnsavedShiftEdits(true);
+		render(StationSwitcher, options(superadminSession));
+
+		await fireEvent.change(screen.getByRole('combobox', { name: 'Stasiun aktif' }), { target: { value: 'station-other' } });
+
+		await waitFor(() => expect(navigation.invalidateAll).toHaveBeenCalled());
+		expect(activeContextBody).toEqual({ org_id: 'org-selected', station_id: 'station-other' });
+	});
 });
 
 describe('StationSwitcher for a non-superadmin session', () => {
@@ -90,5 +126,17 @@ describe('StationSwitcher for a non-superadmin session', () => {
 		await waitFor(() => expect(navigation.invalidateAll).toHaveBeenCalled());
 		expect(document.cookie).toContain('pomkita_active_station=station-other');
 		expect(contextCalls).toBe(0);
+	});
+
+	it('still switches by cookie on shift pages without the unsaved-edits confirm', async () => {
+		window.history.replaceState({}, '', '/shift/shift-1');
+		const confirm = vi.spyOn(window, 'confirm');
+		render(StationSwitcher, { session: supervisorSession, stations, activeStationId: 'station-selected' });
+
+		await fireEvent.change(screen.getByRole('combobox', { name: 'Stasiun aktif' }), { target: { value: 'station-other' } });
+
+		await waitFor(() => expect(navigation.invalidateAll).toHaveBeenCalled());
+		expect(confirm).not.toHaveBeenCalled();
+		expect(document.cookie).toContain('pomkita_active_station=station-other');
 	});
 });
