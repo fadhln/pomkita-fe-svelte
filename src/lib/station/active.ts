@@ -35,8 +35,11 @@ export function activeStationForSession(session: StationSession | null | undefin
 	return activeStation;
 }
 
-export function permittedStations(session: StationSession | null | undefined, stations: StationOption[] = []) {
+export function permittedStations(session: StationSession | null | undefined, stations: StationOption[] = [], scope: 'permitted' | 'organization' = 'permitted') {
 	const stationDetails = new Map(stations.map((station) => [station.id, station]));
+	if (scope === 'organization') {
+		return stations.map(({ id, name }) => ({ id, name: name ?? stationDetails.get(id)?.name ?? null }));
+	}
 	if (session?.active_context?.station_id) {
 		const id = session.active_context.station_id;
 		return [{ id, name: stationDetails.get(id)?.name ?? null }];
