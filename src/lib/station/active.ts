@@ -38,7 +38,7 @@ export function activeStationForSession(session: StationSession | null | undefin
 export function permittedStations(session: StationSession | null | undefined, stations: StationOption[] = [], scope: 'permitted' | 'organization' = 'permitted') {
 	const stationDetails = new Map(stations.map((station) => [station.id, station]));
 	if (scope === 'organization') {
-		return stations.map(({ id, name }) => ({ id, name: name ?? stationDetails.get(id)?.name ?? null }));
+		return stations.map((station) => ({ id: station.id, name: station.name ?? stationDetails.get(station.id)?.name ?? null, enabled: (station as { enabled?: boolean }).enabled !== false }));
 	}
 	if (session?.active_context?.station_id) {
 		const id = session.active_context.station_id;
